@@ -3,8 +3,8 @@
    herd.json is network-first with a cached fallback (fresh when online, still
    browsable offline). Write POSTs (/name /reject /photo /suggest /vote) are
    never cached — they must hit the live daemon. */
-const SHELL = 'herd-shell-v2';
-const DATA = 'herd-data-v2';
+const SHELL = 'herd-shell-v3';
+const DATA = 'herd-data-v3';
 const SHELL_FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {

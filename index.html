@@ -501,10 +501,38 @@ function photoPick(aid){
   }).catch(()=>{P.busy=false;toast('Network error','err');});
 }
 
-/* ============================ SORT (admin, read-only v1) ============================ */
+/* ============================ SORT (admin) — file a photo into a pen ============================ */
+let S={list:[],folders:[],i:0,other:false,busy:false};
 function startSort(){
-  const n=(HERD&&HERD.counts&&HERD.counts.sort)||0;
-  $('view').innerHTML=`<div class="stage card" style="text-align:center"><div class="prompt">Sort photos into pens</div><div class="big">${n?'🗂️':'🎉'}</div><div class="promptsub">${n?n+' photos waiting to be filed.':'Nothing to sort right now.'}</div><div class="promptsub" style="margin-top:8px">Sorting moves files in Drive — that step needs a service-account credential, so it's read-only here for now.</div></div>`;
+  S={list:[],folders:[],i:0,other:false,busy:false};
+  $('view').innerHTML=`<div class="stage card" style="text-align:center"><div class="prompt">Loading photos…</div><div class="big">⏳</div></div>`;
+  api('/sortqueue').then(d=>{ S.list=(d&&d.photos)||[]; S.folders=(d&&d.folders)||[]; S.i=0; showSort(); })
+    .catch(()=>{$('view').innerHTML=`<div class="card empty">Sorting needs the live farm connection.</div>`;});
+}
+function sexGlyph(s){ return s==='female'?'♀ ':s==='male'?'♂ ':''; }
+function showSort(){
+  if(S.i>=S.list.length){ $('view').innerHTML=`<div class="stage card" style="text-align:center"><div class="prompt">${S.list.length?'All filed!':'Nothing to sort.'}</div><div class="big">🎉</div><button class="btn block" onclick="setTab('herd')">Browse the herd</button></div>`; return; }
+  const c=S.list[S.i];
+  const match=S.folders.filter(f=>spMatch(c.species,f.species));
+  const list=(S.other||!match.length)?S.folders:match;
+  $('view').innerHTML=`<div class="stage fade-enter">
+    <div class="progress"><span class="left">Photo ${S.i+1} / ${S.list.length}</span><span>${esc(c.species||'?')}</span></div>
+    <div class="crop"><img src="${c.thumb||c.url}" alt="" loading="lazy"><span class="spchip">${esc(c.species||'?')}</span></div>
+    <div class="prompt">Detected <b>${esc(c.species||'animal')}</b></div><div class="promptsub">Which pen does it belong in?</div>
+    <div class="namelist">${list.map(f=>`<button class="pill" onclick="sortPick('${esc(f.id)}')">${sexGlyph(f.sex)}${esc(f.name)}</button>`).join('')||'<span style="color:var(--muted)">No pens configured.</span>'}</div>
+    <div class="btnrow" style="margin-top:10px">
+      <button class="btn ghost" style="flex:1" onclick="sortOther()">${(S.other||!match.length)?'Showing every pen':'Show all pens ▾'}</button>
+      <button class="btn ghost" style="flex:1" onclick="sortSkip()">Skip</button></div></div>`;
+}
+function sortOther(){ S.other=true; showSort(); }
+function sortSkip(){ S.i++; S.other=false; showSort(); }
+function sortPick(folderId){
+  if(S.busy)return; const c=S.list[S.i]; if(!c)return; S.busy=true;
+  post('/sort',{sid:c.sid,folder:folderId,species:c.species,sex:c.sex||'',name:c.name||''}).then(r=>{
+    S.busy=false;
+    if(r&&r.ok){ toast('Filed ✓','ok'); S.i++; S.other=false; renderTabs(); showSort(); }
+    else { toast((r&&r.error)||'Failed','err'); }
+  }).catch(()=>{S.busy=false;toast('Network error','err');});
 }
 
 boot();
