@@ -552,22 +552,29 @@ function sexGlyph(s){ return s==='female'?'♀ ':s==='male'?'♂ ':''; }
 const MAP_ART = {w:1600, h:900};
 // Pen zones over the farm art — {left,top,w,h} as % of the map, matched to a
 // folder by species+sex (id filled from /placements pens at load).
-// Zones sit over open field areas of the art; spaced so signposts don't collide.
-// x/y/w/h are % of the map. (Tune freely — pure presentation.)
+// Pen drop-zones placed over the REAL field regions of the painted map (which
+// traces the farm's satellite layout). x/y/w/h are % of the 1600x900 art.
+// Top-center pasture, right pasture, and bottom-left pasture are the grazing
+// paddocks; poultry/pigs sit near the barn. (Pure presentation — tune freely.)
 const PEN_ZONES = [
-  {key:'Alpaca|female', label:'Alpaca Girls',  x:4,  y:60, w:20, h:16, emoji:'🦙'},
-  {key:'Alpaca|male',   label:'Alpaca Boys',   x:4,  y:82, w:20, h:14, emoji:'🦙'},
-  {key:'Goat|female',   label:'Goat Does',     x:27, y:62, w:15, h:14, emoji:'🐐'},
-  {key:'Goat|male',     label:'Goat Bucks',    x:27, y:82, w:15, h:14, emoji:'🐐'},
-  {key:'Mule|',         label:'Mules',         x:2,  y:38, w:13, h:14, emoji:'🐴'},
-  {key:'Cattle|female', label:'Cattle Cows',   x:46, y:20, w:13, h:13, emoji:'🐮'},
-  {key:'Cattle|male',   label:'Cattle Bulls',  x:46, y:37, w:13, h:13, emoji:'🐮'},
-  {key:'Pig|',          label:'Pigs',          x:44, y:82, w:13, h:14, emoji:'🐷'},
-  {key:'Ducks|',        label:'Ducks',         x:60, y:66, w:13, h:12, emoji:'🦆'},
-  {key:'Turkey|female', label:'Turkey Hens',   x:72, y:20, w:11, h:12, emoji:'🦃'},
-  {key:'Turkey|male',   label:'Turkey Toms',   x:84, y:20, w:11, h:12, emoji:'🦃'},
-  {key:'Chicken|female',label:'Hens',          x:72, y:58, w:11, h:12, emoji:'🐔'},
-  {key:'Chicken|male',  label:'Roosters',      x:84, y:58, w:11, h:12, emoji:'🐔'},
+  // bottom-left big paddock (alpacas + goats graze here in the art)
+  {key:'Alpaca|female', label:'Alpaca Girls',  x:4,  y:58, w:18, h:15, emoji:'🦙'},
+  {key:'Alpaca|male',   label:'Alpaca Boys',   x:4,  y:80, w:18, h:14, emoji:'🦙'},
+  {key:'Goat|female',   label:'Goat Does',     x:24, y:74, w:14, h:14, emoji:'🐐'},
+  {key:'Goat|male',     label:'Goat Bucks',    x:24, y:90, w:14, h:9,  emoji:'🐐'},
+  {key:'Mule|',         label:'Mules',         x:2,  y:40, w:13, h:14, emoji:'🐴'},
+  // top-center pasture (fenced, alpaca+cattle graze in the art)
+  {key:'Cattle|female', label:'Cattle Cows',   x:42, y:16, w:13, h:13, emoji:'🐮'},
+  {key:'Cattle|male',   label:'Cattle Bulls',  x:57, y:16, w:13, h:13, emoji:'🐮'},
+  // right pasture (cattle + goats graze right of the buildings)
+  {key:'Turkey|female', label:'Turkey Hens',   x:74, y:18, w:11, h:12, emoji:'🦃'},
+  {key:'Turkey|male',   label:'Turkey Toms',   x:74, y:34, w:11, h:12, emoji:'🦃'},
+  // near the barn / lower buildings
+  {key:'Chicken|female',label:'Hens',          x:60, y:74, w:11, h:11, emoji:'🐔'},
+  {key:'Chicken|male',  label:'Roosters',      x:58, y:88, w:12, h:11, emoji:'🐔'},
+  {key:'Pig|',          label:'Pigs',          x:75, y:74, w:12, h:12, emoji:'🐷'},
+  // ducks by the pond (center)
+  {key:'Ducks|',        label:'Ducks',         x:45, y:62, w:12, h:11, emoji:'🦆'},
 ];
 let M=null;  // {pens, placements, view:{scale,tx,ty}, drag}
 function penForZone(z){
