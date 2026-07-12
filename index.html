@@ -158,11 +158,12 @@
 
   /* ---- MAP tab ---- */
   .maphint{font-size:12.5px;color:var(--muted);text-align:center;margin:10px 2px 8px;}
-  .mapstage{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;
-    background:#c9d6a8;box-shadow:var(--shadow);border:1px solid var(--cardborder);touch-action:none;cursor:grab;}
+  /* portrait map (traces the real parcel shape) — tall stage, pan/zoom to explore */
+  .mapstage{position:relative;width:100%;height:min(72vh,620px);border-radius:16px;overflow:hidden;
+    background:#8ea862;box-shadow:var(--shadow);border:1px solid var(--cardborder);touch-action:none;cursor:grab;}
   .mapstage:active{cursor:grabbing;}
-  .mapworld{position:absolute;inset:0;transform-origin:0 0;will-change:transform;}
-  .mapart{display:block;width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none;pointer-events:none;}
+  .mapworld{position:absolute;left:0;top:0;width:100%;transform-origin:0 0;will-change:transform;}
+  .mapart{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;pointer-events:none;}
   .penlayer,.tokenlayer{position:absolute;inset:0;pointer-events:none;}
   .penzone{position:absolute;pointer-events:auto;border:2px dashed rgba(75,107,60,.55);border-radius:12px;
     background:rgba(122,139,90,.12);transition:background .15s,border-color .15s,box-shadow .15s;}
@@ -545,36 +546,64 @@ function photoPick(aid){
 function sexGlyph(s){ return s==='female'?'♀ ':s==='male'?'♂ ':''; }
 
 /* ============================ MAP (admin) — drag animals into their pens ============================
-   A painted farm map (farm-map.jpg) with pen drop-zones positioned over the art.
-   Drag an animal token from the tray onto a pen: saves its position (x/y as 0..1
-   map fractions) AND which pen it lives in, via POST /place. Pens are matched to
-   the real Drive folders (same as Sort). Works with mouse + touch. */
-const MAP_ART = {w:1600, h:900};
+   A hand-drawn SVG farm map traced from the real satellite layout, with pen
+   drop-zones over the actual fields. Drag an animal token from the tray onto a
+   pen: saves its position (x/y as 0..1 map fractions) AND which pen it lives in,
+   via POST /place. Pens match the real Drive folders. Mouse + touch. */
+const MAP_ART = {w:760, h:2000};   // SVG viewBox (portrait, real parcel shape)
+// Inline SVG map — id="mapart" so dropToken() can measure it. Traces: Nelson
+// Cemetery Rd (top, curving down-left then west), Taylor Crossroads Rd (right,
+// vertical), driveway through the center past the pond to the barn cluster then
+// looping down, tilled field center-left, woods framing.
+const FARM_SVG = `<svg class="mapart" id="mapart" viewBox="0 0 760 2000" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" font-family="Georgia,serif">
+<defs><linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a7bd77"/><stop offset="1" stop-color="#8ea862"/></linearGradient>
+<pattern id="tilled" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(20)"><rect width="14" height="14" fill="#b98d5e"/><line x1="0" y1="0" x2="0" y2="14" stroke="#9c7548" stroke-width="3"/></pattern>
+<filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#3c2e18" flood-opacity="0.25"/></filter></defs>
+<rect x="0" y="0" width="760" height="2000" fill="url(#grass)"/>
+<g fill="#5c7444" opacity="0.96"><path d="M0,0 H300 C240,120 120,150 60,260 C20,340 40,520 0,600 Z"/><path d="M0,600 C60,660 40,820 0,900 Z"/><path d="M0,1450 C80,1500 90,1650 40,1760 C20,1820 30,1930 0,2000 Z"/></g>
+<path d="M0,1820 C200,1760 420,1880 620,1800 C700,1770 740,1860 760,1900 V2000 H0 Z" fill="#5c7444" opacity="0.96"/>
+<path d="M760,300 C700,360 700,520 760,600 Z" fill="#5c7444" opacity="0.9"/>
+<g fill="#6b8e4e" stroke="#4e6a38" stroke-width="2"><circle cx="330" cy="470" r="34"/><circle cx="300" cy="500" r="26"/><circle cx="250" cy="1120" r="30"/><circle cx="470" cy="1180" r="24"/><circle cx="600" cy="980" r="30"/><circle cx="640" cy="1030" r="22"/></g>
+<path d="M560,-10 C520,120 470,220 400,300 C320,390 200,430 90,470 C10,500 -20,520 -30,540" fill="none" stroke="#8f8f88" stroke-width="26" stroke-linecap="round"/>
+<path d="M560,-10 C520,120 470,220 400,300 C320,390 200,430 90,470 C10,500 -20,520 -30,540" fill="none" stroke="#c9c9c2" stroke-width="3" stroke-dasharray="10 14"/>
+<path d="M600,-10 C640,300 660,700 660,1100 C660,1500 650,1800 640,2010" fill="none" stroke="#8f8f88" stroke-width="26" stroke-linecap="round"/>
+<path d="M600,-10 C640,300 660,700 660,1100 C660,1500 650,1800 640,2010" fill="none" stroke="#c9c9c2" stroke-width="3" stroke-dasharray="10 14"/>
+<path d="M430,300 C450,430 470,560 500,700 C525,820 540,960 520,1080 C505,1180 430,1240 360,1340 C300,1430 330,1560 300,1660" fill="none" stroke="#cbb083" stroke-width="34" stroke-linecap="round"/>
+<path d="M520,760 C560,800 610,820 650,830" fill="none" stroke="#cbb083" stroke-width="26" stroke-linecap="round"/>
+<rect x="330" y="330" width="270" height="330" rx="18" fill="#9fb86e" stroke="#7d5a34" stroke-width="4" stroke-dasharray="2 10"/>
+<rect x="560" y="360" width="150" height="420" rx="16" fill="#a3bc72" stroke="#7d5a34" stroke-width="4" stroke-dasharray="2 10"/>
+<rect x="120" y="640" width="260" height="240" rx="10" fill="url(#tilled)" stroke="#8a6a44" stroke-width="4"/>
+<rect x="60" y="1120" width="420" height="560" rx="22" fill="#9fb86e" stroke="#7d5a34" stroke-width="4" stroke-dasharray="2 10"/>
+<ellipse cx="470" cy="980" rx="86" ry="60" fill="#6fb4d6" stroke="#4f8fb0" stroke-width="4"/><ellipse cx="450" cy="965" rx="16" ry="9" fill="#8fd0ea" opacity="0.7"/><ellipse cx="500" cy="995" rx="12" ry="7" fill="#8fd0ea" opacity="0.7"/>
+<g filter="url(#soft)"><rect x="560" y="820" width="120" height="90" fill="#b9a58a" stroke="#6e5a3e" stroke-width="3"/><polygon points="560,820 620,780 680,820" fill="#8a8f96" stroke="#6e5a3e" stroke-width="3"/><rect x="686" y="805" width="16" height="105" fill="#c0c4c9" stroke="#6e5a3e" stroke-width="2"/><rect x="600" y="930" width="90" height="70" fill="#f4efe6" stroke="#6e5a3e" stroke-width="3"/><polygon points="600,930 645,895 690,930" fill="#c0492f" stroke="#6e5a3e" stroke-width="3"/></g>
+<g filter="url(#soft)"><rect x="250" y="1580" width="90" height="70" fill="#a9917a" stroke="#6e5a3e" stroke-width="3"/><polygon points="250,1580 295,1548 340,1580" fill="#7d7f86" stroke="#6e5a3e" stroke-width="3"/></g>
+<g font-size="30" opacity="0.9"><text x="150" y="1300">🦙</text><text x="230" y="1360">🐐</text><text x="380" y="450">🐮</text><text x="620" y="470">🐄</text><text x="120" y="1520">🦙</text></g>
+</svg>`;
 // Pen zones over the farm art — {left,top,w,h} as % of the map, matched to a
 // folder by species+sex (id filled from /placements pens at load).
-// Pen drop-zones placed over the REAL field regions of the painted map (which
-// traces the farm's satellite layout). x/y/w/h are % of the 1600x900 art.
-// Top-center pasture, right pasture, and bottom-left pasture are the grazing
-// paddocks; poultry/pigs sit near the barn. (Pure presentation — tune freely.)
+// Pen drop-zones over the REAL field regions of the SVG map (viewBox 760x2000).
+// x/y/w/h are % of the map. Fields: top-center pasture (y16-33), right pasture
+// (x74-93,y18-39), big bottom-left paddock (x8-63,y56-84), barn cluster
+// (x74-92,y41-50), pond (~62%x,49%y). (Pure presentation — tune freely.)
 const PEN_ZONES = [
-  // bottom-left big paddock (alpacas + goats graze here in the art)
-  {key:'Alpaca|female', label:'Alpaca Girls',  x:4,  y:58, w:18, h:15, emoji:'🦙'},
-  {key:'Alpaca|male',   label:'Alpaca Boys',   x:4,  y:80, w:18, h:14, emoji:'🦙'},
-  {key:'Goat|female',   label:'Goat Does',     x:24, y:74, w:14, h:14, emoji:'🐐'},
-  {key:'Goat|male',     label:'Goat Bucks',    x:24, y:90, w:14, h:9,  emoji:'🐐'},
-  {key:'Mule|',         label:'Mules',         x:2,  y:40, w:13, h:14, emoji:'🐴'},
-  // top-center pasture (fenced, alpaca+cattle graze in the art)
-  {key:'Cattle|female', label:'Cattle Cows',   x:42, y:16, w:13, h:13, emoji:'🐮'},
-  {key:'Cattle|male',   label:'Cattle Bulls',  x:57, y:16, w:13, h:13, emoji:'🐮'},
-  // right pasture (cattle + goats graze right of the buildings)
-  {key:'Turkey|female', label:'Turkey Hens',   x:74, y:18, w:11, h:12, emoji:'🦃'},
-  {key:'Turkey|male',   label:'Turkey Toms',   x:74, y:34, w:11, h:12, emoji:'🦃'},
-  // near the barn / lower buildings
-  {key:'Chicken|female',label:'Hens',          x:60, y:74, w:11, h:11, emoji:'🐔'},
-  {key:'Chicken|male',  label:'Roosters',      x:58, y:88, w:12, h:11, emoji:'🐔'},
-  {key:'Pig|',          label:'Pigs',          x:75, y:74, w:12, h:12, emoji:'🐷'},
-  // ducks by the pond (center)
-  {key:'Ducks|',        label:'Ducks',         x:45, y:62, w:12, h:11, emoji:'🦆'},
+  // bottom-left big paddock — alpacas, goats, mules
+  {key:'Alpaca|female', label:'Alpaca Girls',  x:10, y:60, w:22, h:9,  emoji:'🦙'},
+  {key:'Alpaca|male',   label:'Alpaca Boys',   x:10, y:72, w:22, h:9,  emoji:'🦙'},
+  {key:'Goat|female',   label:'Goat Does',     x:36, y:60, w:20, h:9,  emoji:'🐐'},
+  {key:'Goat|male',     label:'Goat Bucks',    x:36, y:72, w:20, h:9,  emoji:'🐐'},
+  {key:'Mule|',         label:'Mules',         x:10, y:84, w:22, h:7,  emoji:'🐴'},
+  // top-center pasture — cattle
+  {key:'Cattle|female', label:'Cattle Cows',   x:45, y:18, w:22, h:6,  emoji:'🐮'},
+  {key:'Cattle|male',   label:'Cattle Bulls',  x:45, y:26, w:22, h:6,  emoji:'🐮'},
+  // right pasture — turkeys
+  {key:'Turkey|female', label:'Turkey Hens',   x:75, y:20, w:20, h:6,  emoji:'🦃'},
+  {key:'Turkey|male',   label:'Turkey Toms',   x:75, y:30, w:20, h:6,  emoji:'🦃'},
+  // by the barn cluster — chickens + pigs
+  {key:'Chicken|female',label:'Hens',          x:75, y:42, w:18, h:5,  emoji:'🐔'},
+  {key:'Chicken|male',  label:'Roosters',      x:75, y:49, w:18, h:5,  emoji:'🐔'},
+  {key:'Pig|',          label:'Pigs',          x:36, y:84, w:20, h:7,  emoji:'🐷'},
+  // ducks by the pond
+  {key:'Ducks|',        label:'Ducks',         x:52, y:44, w:16, h:6,  emoji:'🦆'},
 ];
 let M=null;  // {pens, placements, view:{scale,tx,ty}, drag}
 function penForZone(z){
@@ -612,7 +641,7 @@ function renderMap(){
     <div class="maphint">Drag an animal onto its pen. Pinch or use ＋/－ to zoom.</div>
     <div class="mapstage" id="mapstage">
       <div class="mapworld" id="mapworld">
-        <img class="mapart" id="mapart" src="farm-map.jpg" alt="Illustrated map of Tapestry Acres" draggable="false">
+        ${FARM_SVG}
         <div class="penlayer">${zones}</div>
         <div class="tokenlayer" id="tokenlayer">${tokens}</div>
       </div>
