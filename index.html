@@ -158,12 +158,13 @@
 
   /* ---- MAP tab ---- */
   .maphint{font-size:12.5px;color:var(--muted);text-align:center;margin:10px 2px 8px;}
-  /* portrait map (traces the real parcel shape) — tall stage, pan/zoom to explore */
-  .mapstage{position:relative;width:100%;height:min(72vh,620px);border-radius:16px;overflow:hidden;
+  /* portrait map (traces the real parcel shape). The world is sized to the map's
+     pixel box; JS computes a fit-scale so the WHOLE map is visible at min zoom. */
+  .mapstage{position:relative;width:100%;height:min(74vh,640px);border-radius:16px;overflow:hidden;
     background:#8ea862;box-shadow:var(--shadow);border:1px solid var(--cardborder);touch-action:none;cursor:grab;}
   .mapstage:active{cursor:grabbing;}
-  .mapworld{position:absolute;left:0;top:0;width:100%;transform-origin:0 0;will-change:transform;}
-  .mapart{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;pointer-events:none;}
+  .mapworld{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;}
+  .mapart{display:block;width:100%;height:100%;user-select:none;-webkit-user-drag:none;pointer-events:none;}
   .penlayer,.tokenlayer{position:absolute;inset:0;pointer-events:none;}
   .penzone{position:absolute;pointer-events:auto;border:2px dashed rgba(75,107,60,.55);border-radius:12px;
     background:rgba(122,139,90,.12);transition:background .15s,border-color .15s,box-shadow .15s;}
@@ -267,7 +268,6 @@ async function boot(){
     // daemon serves /herd.json live; the mirror ships it as a static file next to index.html
     HERD = await api('/herd.json');
   }catch(e){ setConn(false); HERD = null; }
-  renderTabs();
   const t=HERD&&HERD.totals||{};
   $('sub').innerHTML=`<span class="conn ${READONLY?'':'live'}" id="conn"></span>Tapestry Acres · ${t.headcount||0} animals · ${t.named||0} named`;
   const bs=Object.entries((t.by_species)||{}).map(([k,v])=>`${v} ${k.toLowerCase()}`).join(' · ');
@@ -615,7 +615,7 @@ function penById(id){ return (M.pens||[]).find(f=>f.id===id); }
 function startMap(){
   $('view').innerHTML=`<div class="stage card" style="text-align:center"><div class="prompt">Rolling out the map…</div><div class="big">🗺️</div></div>`;
   api('/placements').then(d=>{
-    M={pens:(d&&d.pens)||[], placements:(d&&d.placements)||{}, view:{scale:1,tx:0,ty:0}, drag:null};
+    M={pens:(d&&d.pens)||[], placements:(d&&d.placements)||{}, view:{scale:1,tx:0,ty:0}, fit:1, drag:null};
     renderMap();
   }).catch(()=>{$('view').innerHTML=`<div class="card empty">The map needs the live farm connection.</div>`;});
 }
@@ -655,9 +655,18 @@ function renderMap(){
       <div class="traylbl">${tray.length} to place · drag onto the map</div>
       <div class="trayrow">${tray.map(a=>tokenHTML(a,'','tray')).join('')||'<span style="color:var(--muted);padding:8px">Everyone is placed! 🎉</span>'}</div>
     </div>`;
-  applyMapView();
+  sizeWorld();          // give the world an explicit pixel box (map aspect)
+  fitMap();             // compute fit-scale + center so the WHOLE map shows
   wireMapPanZoom();
   wireTokenDrag();
+}
+// Size the world to the map's pixel box: width = stage width, height keeps the
+// map aspect (viewBox h/w). Then transforms scale/translate this fixed box.
+function sizeWorld(){
+  const stage=$('mapstage'), w=$('mapworld'); if(!stage||!w) return;
+  const sw=stage.clientWidth;
+  w.style.width=sw+'px';
+  w.style.height=(sw*MAP_ART.h/MAP_ART.w)+'px';
 }
 function tokenHTML(a,style,cls){
   const img=primary(a);
@@ -665,8 +674,23 @@ function tokenHTML(a,style,cls){
   return `<div class="token ${cls}" data-aid="${esc(a.id)}" style="${style}" title="${esc(a.name)}">${face}<span class="tkname">${esc(a.name)}</span></div>`;
 }
 function applyMapView(){ const w=$('mapworld'); if(w){ const v=M.view; w.style.transform=`translate(${v.tx}px,${v.ty}px) scale(${v.scale})`; } }
-function mapZoom(f){ M.view.scale=Math.max(1,Math.min(4,M.view.scale*f)); applyMapView(); }
-function mapReset(){ M.view={scale:1,tx:0,ty:0}; applyMapView(); }
+// fit-scale = the scale at which the whole world height fits the stage; that's
+// the minimum zoom, so you can always see the entire map. Default view = fit, centered.
+function fitMap(){
+  const stage=$('mapstage'), w=$('mapworld'); if(!stage||!w) return;
+  const sh=stage.clientHeight, wh=w.clientHeight||1, ww=w.clientWidth||1;
+  M.fit=Math.min(1, sh/wh);                       // shrink so full height fits (never upscale past 1)
+  M.view.scale=M.fit;
+  M.view.tx=(stage.clientWidth - ww*M.fit)/2;     // center horizontally
+  M.view.ty=(sh - wh*M.fit)/2;                    // center vertically
+  applyMapView();
+}
+function mapZoom(f){
+  const min=M.fit||0.2;
+  M.view.scale=Math.max(min,Math.min(4,M.view.scale*f));
+  applyMapView();
+}
+function mapReset(){ fitMap(); }
 function wireMapPanZoom(){
   const stage=$('mapstage'); if(!stage) return;
   let px=0,py=0,panning=false,pinchD=0;
