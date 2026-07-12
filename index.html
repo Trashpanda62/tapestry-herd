@@ -155,6 +155,44 @@
   .conn.live{background:var(--ok);} .conn.off{background:var(--accent);}
   button:focus-visible,input:focus-visible,.tcard:focus-visible{outline:2px solid var(--forest);outline-offset:2px;}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+  /* ---- MAP tab ---- */
+  .maphint{font-size:12.5px;color:var(--muted);text-align:center;margin:10px 2px 8px;}
+  .mapstage{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;
+    background:#c9d6a8;box-shadow:var(--shadow);border:1px solid var(--cardborder);touch-action:none;cursor:grab;}
+  .mapstage:active{cursor:grabbing;}
+  .mapworld{position:absolute;inset:0;transform-origin:0 0;will-change:transform;}
+  .mapart{display:block;width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none;pointer-events:none;}
+  .penlayer,.tokenlayer{position:absolute;inset:0;pointer-events:none;}
+  .penzone{position:absolute;pointer-events:auto;border:2px dashed rgba(75,107,60,.55);border-radius:12px;
+    background:rgba(122,139,90,.12);transition:background .15s,border-color .15s,box-shadow .15s;}
+  .penzone.hot{background:rgba(224,162,60,.34);border-color:var(--gold);box-shadow:0 0 0 3px rgba(224,162,60,.4),0 6px 18px -6px rgba(0,0,0,.4);}
+  .pensign{position:absolute;left:50%;top:-2px;transform:translate(-50%,-100%);
+    font-family:var(--serif);font-weight:700;font-size:10px;line-height:1;white-space:nowrap;
+    background:linear-gradient(#c79a5f,#b07f45);border:1.5px solid #8a5f31;border-radius:5px;padding:3px 7px;
+    color:#3d2a15;box-shadow:inset 0 1px 0 rgba(255,244,224,.5),0 2px 4px rgba(40,30,15,.3);}
+  .pensign b{color:#2f6b3d;}
+  .token{position:absolute;transform:translate(-50%,-50%);width:52px;pointer-events:auto;cursor:grab;
+    display:flex;flex-direction:column;align-items:center;gap:2px;touch-action:none;}
+  .token.tray{position:relative;transform:none;flex:0 0 auto;}
+  .token img,.token .tkemoji{width:44px;height:44px;border-radius:50%;object-fit:cover;
+    background:var(--card);border:2.5px solid #fff;box-shadow:0 2px 6px rgba(40,30,15,.35);
+    display:flex;align-items:center;justify-content:center;font-size:26px;}
+  .token .tkname{font-size:9.5px;font-weight:700;color:#33301f;background:rgba(255,253,249,.9);
+    padding:1px 5px;border-radius:6px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.15);}
+  .token.onmap .tkname{opacity:0;transition:opacity .12s;}
+  .token.onmap:hover .tkname{opacity:1;}
+  .token.dragging{opacity:.35;}
+  .dragghost{position:fixed;z-index:60;width:52px;pointer-events:none;transform:none;opacity:.95;}
+  .mapctrls{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:6px;z-index:5;}
+  .ctrlbtn{width:36px;height:36px;border:none;border-radius:10px;background:rgba(255,253,249,.94);
+    color:var(--forest);font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px -3px rgba(0,0,0,.4);
+    display:flex;align-items:center;justify-content:center;}
+  .ctrlbtn:active{transform:scale(.93);}
+  .tray{margin-top:12px;background:var(--card);border:1px solid var(--cardborder);border-radius:14px;padding:10px 12px 12px;box-shadow:var(--shadow);}
+  .traylbl{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;}
+  .trayrow{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;min-height:64px;align-items:flex-start;}
+  .trayrow::-webkit-scrollbar{display:none;}
 </style>
 </head>
 <body>
@@ -233,7 +271,10 @@ async function boot(){
   $('sub').innerHTML=`<span class="conn ${READONLY?'':'live'}" id="conn"></span>Tapestry Acres · ${t.headcount||0} animals · ${t.named||0} named`;
   const bs=Object.entries((t.by_species)||{}).map(([k,v])=>`${v} ${k.toLowerCase()}`).join(' · ');
   $('foot').textContent=bs?('Herd: '+bs):'';
-  setTab('herd');
+  // deep-link: ?tab=map opens straight to a tab (admin tabs need ?admin=1 too)
+  const wantTab=(location.search.match(/[?&]tab=(\w+)/)||[])[1];
+  const valid=TABS.some(t=>t.k===wantTab && (!t.admin||ADMIN));
+  setTab(valid?wantTab:'herd');
   if('serviceWorker' in navigator){ try{ navigator.serviceWorker.register('sw.js'); }catch(e){} }
 }
 
@@ -242,7 +283,7 @@ const TABS = [
   {k:'quiz', ic:'🎯', label:'Quiz'},
   {k:'name', ic:'✍️', label:'Name Them', admin:true, cnt:d=>d&&d.counts&&d.counts.pending},
   {k:'photos', ic:'📷', label:'Photos', admin:true, cnt:d=>d&&d.counts&&d.counts.gallery},
-  {k:'sort', ic:'🗂️', label:'Sort', admin:true, cnt:d=>d&&d.counts&&d.counts.sort},
+  {k:'map', ic:'🗺️', label:'Map', admin:true},
 ];
 function renderTabs(){
   const bar=$('tabbar');
@@ -258,7 +299,7 @@ function setTab(t){
   else if(t==='quiz') startQuiz();
   else if(t==='name') startName();
   else if(t==='photos') startPhotos();
-  else if(t==='sort') startSort();
+  else if(t==='map') startMap();
 }
 
 /* ============================ HERD (guest) ============================ */
@@ -501,38 +542,168 @@ function photoPick(aid){
   }).catch(()=>{P.busy=false;toast('Network error','err');});
 }
 
-/* ============================ SORT (admin) — file a photo into a pen ============================ */
-let S={list:[],folders:[],i:0,other:false,busy:false};
-function startSort(){
-  S={list:[],folders:[],i:0,other:false,busy:false};
-  $('view').innerHTML=`<div class="stage card" style="text-align:center"><div class="prompt">Loading photos…</div><div class="big">⏳</div></div>`;
-  api('/sortqueue').then(d=>{ S.list=(d&&d.photos)||[]; S.folders=(d&&d.folders)||[]; S.i=0; showSort(); })
-    .catch(()=>{$('view').innerHTML=`<div class="card empty">Sorting needs the live farm connection.</div>`;});
-}
 function sexGlyph(s){ return s==='female'?'♀ ':s==='male'?'♂ ':''; }
-function showSort(){
-  if(S.i>=S.list.length){ $('view').innerHTML=`<div class="stage card" style="text-align:center"><div class="prompt">${S.list.length?'All filed!':'Nothing to sort.'}</div><div class="big">🎉</div><button class="btn block" onclick="setTab('herd')">Browse the herd</button></div>`; return; }
-  const c=S.list[S.i];
-  const match=S.folders.filter(f=>spMatch(c.species,f.species));
-  const list=(S.other||!match.length)?S.folders:match;
-  $('view').innerHTML=`<div class="stage fade-enter">
-    <div class="progress"><span class="left">Photo ${S.i+1} / ${S.list.length}</span><span>${esc(c.species||'?')}</span></div>
-    <div class="crop"><img src="${c.thumb||c.url}" alt="" loading="lazy"><span class="spchip">${esc(c.species||'?')}</span></div>
-    <div class="prompt">Detected <b>${esc(c.species||'animal')}</b></div><div class="promptsub">Which pen does it belong in?</div>
-    <div class="namelist">${list.map(f=>`<button class="pill" onclick="sortPick('${esc(f.id)}')">${sexGlyph(f.sex)}${esc(f.name)}</button>`).join('')||'<span style="color:var(--muted)">No pens configured.</span>'}</div>
-    <div class="btnrow" style="margin-top:10px">
-      <button class="btn ghost" style="flex:1" onclick="sortOther()">${(S.other||!match.length)?'Showing every pen':'Show all pens ▾'}</button>
-      <button class="btn ghost" style="flex:1" onclick="sortSkip()">Skip</button></div></div>`;
+
+/* ============================ MAP (admin) — drag animals into their pens ============================
+   A painted farm map (farm-map.jpg) with pen drop-zones positioned over the art.
+   Drag an animal token from the tray onto a pen: saves its position (x/y as 0..1
+   map fractions) AND which pen it lives in, via POST /place. Pens are matched to
+   the real Drive folders (same as Sort). Works with mouse + touch. */
+const MAP_ART = {w:1600, h:900};
+// Pen zones over the farm art — {left,top,w,h} as % of the map, matched to a
+// folder by species+sex (id filled from /placements pens at load).
+// Zones sit over open field areas of the art; spaced so signposts don't collide.
+// x/y/w/h are % of the map. (Tune freely — pure presentation.)
+const PEN_ZONES = [
+  {key:'Alpaca|female', label:'Alpaca Girls',  x:4,  y:60, w:20, h:16, emoji:'🦙'},
+  {key:'Alpaca|male',   label:'Alpaca Boys',   x:4,  y:82, w:20, h:14, emoji:'🦙'},
+  {key:'Goat|female',   label:'Goat Does',     x:27, y:62, w:15, h:14, emoji:'🐐'},
+  {key:'Goat|male',     label:'Goat Bucks',    x:27, y:82, w:15, h:14, emoji:'🐐'},
+  {key:'Mule|',         label:'Mules',         x:2,  y:38, w:13, h:14, emoji:'🐴'},
+  {key:'Cattle|female', label:'Cattle Cows',   x:46, y:20, w:13, h:13, emoji:'🐮'},
+  {key:'Cattle|male',   label:'Cattle Bulls',  x:46, y:37, w:13, h:13, emoji:'🐮'},
+  {key:'Pig|',          label:'Pigs',          x:44, y:82, w:13, h:14, emoji:'🐷'},
+  {key:'Ducks|',        label:'Ducks',         x:60, y:66, w:13, h:12, emoji:'🦆'},
+  {key:'Turkey|female', label:'Turkey Hens',   x:72, y:20, w:11, h:12, emoji:'🦃'},
+  {key:'Turkey|male',   label:'Turkey Toms',   x:84, y:20, w:11, h:12, emoji:'🦃'},
+  {key:'Chicken|female',label:'Hens',          x:72, y:58, w:11, h:12, emoji:'🐔'},
+  {key:'Chicken|male',  label:'Roosters',      x:84, y:58, w:11, h:12, emoji:'🐔'},
+];
+let M=null;  // {pens, placements, view:{scale,tx,ty}, drag}
+function penForZone(z){
+  const [sp,sx]=z.key.split('|');
+  return (M.pens||[]).find(f=>spMatch(sp,f.species)&&((f.sex||'')===(sx||''))) ||
+         (M.pens||[]).find(f=>spMatch(sp,f.species)&&!sx);
 }
-function sortOther(){ S.other=true; showSort(); }
-function sortSkip(){ S.i++; S.other=false; showSort(); }
-function sortPick(folderId){
-  if(S.busy)return; const c=S.list[S.i]; if(!c)return; S.busy=true;
-  post('/sort',{sid:c.sid,folder:folderId,species:c.species,sex:c.sex||'',name:c.name||''}).then(r=>{
-    S.busy=false;
-    if(r&&r.ok){ toast('Filed ✓','ok'); S.i++; S.other=false; renderTabs(); showSort(); }
-    else { toast((r&&r.error)||'Failed','err'); }
-  }).catch(()=>{S.busy=false;toast('Network error','err');});
+function penById(id){ return (M.pens||[]).find(f=>f.id===id); }
+function startMap(){
+  $('view').innerHTML=`<div class="stage card" style="text-align:center"><div class="prompt">Rolling out the map…</div><div class="big">🗺️</div></div>`;
+  api('/placements').then(d=>{
+    M={pens:(d&&d.pens)||[], placements:(d&&d.placements)||{}, view:{scale:1,tx:0,ty:0}, drag:null};
+    renderMap();
+  }).catch(()=>{$('view').innerHTML=`<div class="card empty">The map needs the live farm connection.</div>`;});
+}
+function unplacedAnimals(){
+  return (HERD.individuals||[]).filter(a=>!(M.placements[a.id]&&typeof M.placements[a.id].x==='number'));
+}
+function renderMap(){
+  const placed=(HERD.individuals||[]).filter(a=>M.placements[a.id]&&typeof M.placements[a.id].x==='number');
+  const tray=unplacedAnimals();
+  // pen zones (drop targets) with a wooden-sign label
+  const zones=PEN_ZONES.map((z,i)=>{
+    const pen=penForZone(z);
+    const n=placed.filter(a=>M.placements[a.id].pen===(pen&&pen.id)).length;
+    return `<div class="penzone" data-zone="${i}" style="left:${z.x}%;top:${z.y}%;width:${z.w}%;height:${z.h}%">
+      <div class="pensign">${z.emoji} ${esc(z.label)}${n?` <b>${n}</b>`:''}</div></div>`;
+  }).join('');
+  // placed tokens on the map
+  const tokens=placed.map(a=>{
+    const p=M.placements[a.id];
+    return tokenHTML(a,`left:${p.x*100}%;top:${p.y*100}%`,'onmap');
+  }).join('');
+  $('view').innerHTML=`
+    <div class="maphint">Drag an animal onto its pen. Pinch or use ＋/－ to zoom.</div>
+    <div class="mapstage" id="mapstage">
+      <div class="mapworld" id="mapworld">
+        <img class="mapart" id="mapart" src="farm-map.jpg" alt="Illustrated map of Tapestry Acres" draggable="false">
+        <div class="penlayer">${zones}</div>
+        <div class="tokenlayer" id="tokenlayer">${tokens}</div>
+      </div>
+      <div class="mapctrls">
+        <button class="ctrlbtn" onclick="mapZoom(1.25)">＋</button>
+        <button class="ctrlbtn" onclick="mapZoom(0.8)">－</button>
+        <button class="ctrlbtn" onclick="mapReset()">⟳</button>
+      </div>
+    </div>
+    <div class="tray" id="tray">
+      <div class="traylbl">${tray.length} to place · drag onto the map</div>
+      <div class="trayrow">${tray.map(a=>tokenHTML(a,'','tray')).join('')||'<span style="color:var(--muted);padding:8px">Everyone is placed! 🎉</span>'}</div>
+    </div>`;
+  applyMapView();
+  wireMapPanZoom();
+  wireTokenDrag();
+}
+function tokenHTML(a,style,cls){
+  const img=primary(a);
+  const face=img?`<img src="${img}" alt="">`:`<span class="tkemoji">${emoji(a.species)}</span>`;
+  return `<div class="token ${cls}" data-aid="${esc(a.id)}" style="${style}" title="${esc(a.name)}">${face}<span class="tkname">${esc(a.name)}</span></div>`;
+}
+function applyMapView(){ const w=$('mapworld'); if(w){ const v=M.view; w.style.transform=`translate(${v.tx}px,${v.ty}px) scale(${v.scale})`; } }
+function mapZoom(f){ M.view.scale=Math.max(1,Math.min(4,M.view.scale*f)); applyMapView(); }
+function mapReset(){ M.view={scale:1,tx:0,ty:0}; applyMapView(); }
+function wireMapPanZoom(){
+  const stage=$('mapstage'); if(!stage) return;
+  let px=0,py=0,panning=false,pinchD=0;
+  stage.addEventListener('pointerdown',e=>{ if(e.target.closest('.token'))return; panning=true; px=e.clientX; py=e.clientY; });
+  stage.addEventListener('pointermove',e=>{ if(!panning)return; M.view.tx+=e.clientX-px; M.view.ty+=e.clientY-py; px=e.clientX; py=e.clientY; applyMapView(); });
+  window.addEventListener('pointerup',()=>{ panning=false; });
+  stage.addEventListener('wheel',e=>{ e.preventDefault(); mapZoom(e.deltaY<0?1.12:0.9); },{passive:false});
+  // pinch
+  stage.addEventListener('touchmove',e=>{ if(e.touches.length===2){ e.preventDefault(); const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); if(pinchD) mapZoom(d/pinchD); pinchD=d; } },{passive:false});
+  stage.addEventListener('touchend',()=>{ pinchD=0; });
+}
+/* --- token drag (mouse + touch) onto pen zones --- */
+function wireTokenDrag(){
+  const layer=$('view');
+  let cur=null, ghost=null;
+  function down(e){
+    const tk=e.target.closest('.token'); if(!tk) return;
+    e.preventDefault();
+    const aid=tk.dataset.aid;
+    cur={aid, tk};
+    ghost=tk.cloneNode(true); ghost.classList.add('dragghost');
+    document.body.appendChild(ghost);
+    moveGhost(e); tk.classList.add('dragging');
+    document.addEventListener('pointermove',move);
+    document.addEventListener('pointerup',up);
+  }
+  function moveGhost(e){ if(ghost){ ghost.style.left=(e.clientX-26)+'px'; ghost.style.top=(e.clientY-26)+'px'; } }
+  function move(e){ if(!cur)return; e.preventDefault(); moveGhost(e); highlightZoneAt(e.clientX,e.clientY); }
+  function up(e){
+    document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up);
+    if(cur&&cur.tk) cur.tk.classList.remove('dragging');
+    document.querySelectorAll('.penzone.hot').forEach(z=>z.classList.remove('hot'));
+    if(ghost){ ghost.remove(); ghost=null; }
+    if(cur) dropToken(cur.aid, e.clientX, e.clientY);
+    cur=null;
+  }
+  layer.addEventListener('pointerdown',down);
+}
+function zoneAt(cx,cy){
+  const zones=[...document.querySelectorAll('.penzone')];
+  for(const z of zones){ const r=z.getBoundingClientRect(); if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom) return z; }
+  return null;
+}
+function highlightZoneAt(cx,cy){
+  const z=zoneAt(cx,cy);
+  document.querySelectorAll('.penzone.hot').forEach(x=>{ if(x!==z) x.classList.remove('hot'); });
+  if(z) z.classList.add('hot');
+}
+function dropToken(aid, cx, cy){
+  const art=$('mapart'); if(!art) return;
+  const r=art.getBoundingClientRect();
+  const x=Math.max(0,Math.min(1,(cx-r.left)/r.width));
+  const y=Math.max(0,Math.min(1,(cy-r.top)/r.height));
+  const z=zoneAt(cx,cy);
+  const a=(HERD.individuals||[]).find(x=>x.id===aid);
+  const body={aid, x, y};
+  let penName='the open field';
+  if(z){
+    const zone=PEN_ZONES[+z.dataset.zone];
+    const pen=penForZone(zone);
+    body.pen=pen?pen.id:'';
+    penName=zone.label;
+    // species sanity check — warn but allow (Steve knows best)
+    const [sp]=zone.key.split('|');
+    if(a&&a.species&&!spMatch(sp,a.species)) toast(`Note: ${esc(a.name)} is a ${esc(a.species)} — placed in ${esc(zone.label)} anyway`,'');
+  } else { body.pen=''; }
+  // optimistic local update + persist
+  M.placements[aid]=Object.assign({},M.placements[aid],{x,y,pen:body.pen});
+  post('/place',body).then(r=>{
+    if(r&&r.ok){ toast(`${esc(a?a.name:'Animal')} → ${esc(penName)} ✓`,'ok'); }
+    else { toast((r&&r.error)||'Save failed','err'); }
+  }).catch(()=>toast('Network error','err'));
+  renderMap();
 }
 
 boot();

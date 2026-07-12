@@ -3,9 +3,9 @@
    herd.json is network-first with a cached fallback (fresh when online, still
    browsable offline). Write POSTs (/name /reject /photo /suggest /vote) are
    never cached — they must hit the live daemon. */
-const SHELL = 'herd-shell-v3';
-const DATA = 'herd-data-v3';
-const SHELL_FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+const SHELL = 'herd-shell-v5';
+const DATA = 'herd-data-v5';
+const SHELL_FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './farm-map.jpg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
@@ -34,7 +34,8 @@ self.addEventListener('fetch', e => {
     );
     return;
   }
-  if (url.pathname.endsWith('/crops') || url.pathname.endsWith('/gallery')) return;  // always live
+  // live admin queues — never cache (must reflect the vault right now)
+  if (/\/(crops|gallery|sortqueue|healthz)$/.test(url.pathname)) return;
 
   // App shell: network-FIRST so updates land immediately, falling back to cache
   // only when offline (keeps the farm-field offline browse working). Avoids the
