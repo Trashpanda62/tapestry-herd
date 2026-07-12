@@ -156,24 +156,42 @@
   button:focus-visible,input:focus-visible,.tcard:focus-visible{outline:2px solid var(--forest);outline-offset:2px;}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 
-  /* ---- MAP tab ---- */
+  /* ---- MAP tab (plans-hub painted styling) ---- */
   .maphint{font-size:12.5px;color:var(--muted);text-align:center;margin:10px 2px 8px;}
-  /* portrait map (traces the real parcel shape). The world is sized to the map's
-     pixel box; JS computes a fit-scale so the WHOLE map is visible at min zoom. */
-  .mapstage{position:relative;width:100%;height:min(74vh,640px);border-radius:16px;overflow:hidden;
-    background:#8ea862;box-shadow:var(--shadow);border:1px solid var(--cardborder);touch-action:none;cursor:grab;}
+  /* cream page-edge frame like the plans hub, on a warm dark stage */
+  .mapframe{border-radius:16px;padding:6px;background:#efe6d2;
+    box-shadow:0 0 0 1px #d9cdb0,0 10px 30px -14px rgba(60,45,25,.5);}
+  .mapstage{position:relative;width:100%;height:min(74vh,640px);border-radius:11px;overflow:hidden;
+    background:radial-gradient(120% 100% at 50% 30%,#6b5236,#4a3924 72%,#3a2c1b);
+    touch-action:none;cursor:grab;}
   .mapstage:active{cursor:grabbing;}
+  .mapstage.editing{cursor:default;}
   .mapworld{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;}
   .mapart{display:block;width:100%;height:100%;user-select:none;-webkit-user-drag:none;pointer-events:none;}
   .penlayer,.tokenlayer{position:absolute;inset:0;pointer-events:none;}
-  .penzone{position:absolute;pointer-events:auto;border:2px dashed rgba(75,107,60,.55);border-radius:12px;
-    background:rgba(122,139,90,.12);transition:background .15s,border-color .15s,box-shadow .15s;}
-  .penzone.hot{background:rgba(224,162,60,.34);border-color:var(--gold);box-shadow:0 0 0 3px rgba(224,162,60,.4),0 6px 18px -6px rgba(0,0,0,.4);}
-  .pensign{position:absolute;left:50%;top:-2px;transform:translate(-50%,-100%);
-    font-family:var(--serif);font-weight:700;font-size:10px;line-height:1;white-space:nowrap;
-    background:linear-gradient(#c79a5f,#b07f45);border:1.5px solid #8a5f31;border-radius:5px;padding:3px 7px;
-    color:#3d2a15;box-shadow:inset 0 1px 0 rgba(255,244,224,.5),0 2px 4px rgba(40,30,15,.3);}
-  .pensign b{color:#2f6b3d;}
+  /* pen drop-zone: invisible box in normal mode (only the sign shows); dashed in edit */
+  .penzone{position:absolute;pointer-events:none;border-radius:12px;transition:background .15s,box-shadow .15s;}
+  .penzone.hot{background:rgba(224,162,60,.30);box-shadow:0 0 0 3px rgba(224,162,60,.5),0 6px 18px -6px rgba(0,0,0,.4);}
+  .penzone.editing{pointer-events:auto;cursor:move;border:2px dashed rgba(255,253,249,.6);background:rgba(122,139,90,.14);}
+  .rz{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;border-radius:50%;
+    background:var(--gold);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:nwse-resize;pointer-events:auto;}
+  /* ---- wooden signpost (plans-hub 1:1) ---- */
+  .penzone .sign{position:absolute;left:50%;top:0;transform:translate(-50%,-100%);transform-origin:50% 100%;
+    display:flex;flex-direction:column;align-items:center;pointer-events:none;
+    filter:drop-shadow(0 4px 6px rgba(40,30,15,.4));transition:transform .25s var(--ease,cubic-bezier(.2,.7,.2,1));z-index:3;}
+  .penzone:not(.editing) .sign{animation:sway 5s ease-in-out infinite;}
+  .penzone .plank{position:relative;background:linear-gradient(#c79a5f,#b07f45);border:1.5px solid #8a5f31;border-radius:5px;
+    padding:3px 9px;font-family:var(--serif);font-weight:700;font-size:10px;line-height:1.05;color:#3d2a15;text-align:center;white-space:nowrap;
+    box-shadow:inset 0 1px 0 rgba(255,244,224,.5),inset 0 -2px 3px rgba(90,60,25,.35);}
+  .penzone .plank::before,.penzone .plank::after{content:"";position:absolute;top:3px;width:3px;height:3px;border-radius:50%;background:#6e4a26;box-shadow:inset 0 1px 0 rgba(255,240,220,.4);}
+  .penzone .plank::before{left:4px;} .penzone .plank::after{right:4px;}
+  .penzone .sub{display:block;font-family:var(--sans);font-size:7px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:#2f6b3d;margin-top:1px;}
+  .penzone .post{width:3px;height:12px;background:linear-gradient(90deg,#7a5228,#a06e39 40%,#7a5228);border-radius:0 0 2px 2px;margin-top:-1px;}
+  .penzone.hot .sign,.penzone.editing .sign{animation-play-state:paused;transform:translate(-50%,-100%) scale(1.08);}
+  @keyframes sway{0%,100%{transform:translate(-50%,-100%) rotate(-1.3deg);}50%{transform:translate(-50%,-100%) rotate(1.3deg);}}
+  /* features draggable only in edit mode */
+  .mapstage.editing .feat{cursor:move;}
+  /* animal tokens */
   .token{position:absolute;transform:translate(-50%,-50%);width:52px;pointer-events:auto;cursor:grab;
     display:flex;flex-direction:column;align-items:center;gap:2px;touch-action:none;}
   .token.tray{position:relative;transform:none;flex:0 0 auto;}
@@ -191,6 +209,8 @@
     color:var(--forest);font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px -3px rgba(0,0,0,.4);
     display:flex;align-items:center;justify-content:center;}
   .ctrlbtn:active{transform:scale(.93);}
+  .editbar{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+  .editbar .btn{flex:1;min-width:120px;font-size:14px;padding:11px 14px;}
   .tray{margin-top:12px;background:var(--card);border:1px solid var(--cardborder);border-radius:14px;padding:10px 12px 12px;box-shadow:var(--shadow);}
   .traylbl{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;}
   .trayrow{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;min-height:64px;align-items:flex-start;}
@@ -545,224 +565,232 @@ function photoPick(aid){
 
 function sexGlyph(s){ return s==='female'?'♀ ':s==='male'?'♂ ':''; }
 
-/* ============================ MAP (admin) — drag animals into their pens ============================
-   A hand-drawn SVG farm map traced from the real satellite layout, with pen
-   drop-zones over the actual fields. Drag an animal token from the tray onto a
-   pen: saves its position (x/y as 0..1 map fractions) AND which pen it lives in,
-   via POST /place. Pens match the real Drive folders. Mouse + touch. */
-const MAP_ART = {w:760, h:2000};   // SVG viewBox (portrait, real parcel shape)
-// Inline SVG map — id="mapart" so dropToken() can measure it. Traces: Nelson
-// Cemetery Rd (top, curving down-left then west), Taylor Crossroads Rd (right,
-// vertical), driveway through the center past the pond to the barn cluster then
-// looping down, tilled field center-left, woods framing.
-const FARM_SVG = `<svg class="mapart" id="mapart" viewBox="0 0 760 2000" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" font-family="Georgia,serif">
-<defs><linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a7bd77"/><stop offset="1" stop-color="#8ea862"/></linearGradient>
-<pattern id="tilled" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(20)"><rect width="14" height="14" fill="#b98d5e"/><line x1="0" y1="0" x2="0" y2="14" stroke="#9c7548" stroke-width="3"/></pattern>
-<filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#3c2e18" flood-opacity="0.25"/></filter></defs>
-<rect x="0" y="0" width="760" height="2000" fill="url(#grass)"/>
-<g fill="#5c7444" opacity="0.96"><path d="M0,0 H300 C240,120 120,150 60,260 C20,340 40,520 0,600 Z"/><path d="M0,600 C60,660 40,820 0,900 Z"/><path d="M0,1450 C80,1500 90,1650 40,1760 C20,1820 30,1930 0,2000 Z"/></g>
-<path d="M0,1820 C200,1760 420,1880 620,1800 C700,1770 740,1860 760,1900 V2000 H0 Z" fill="#5c7444" opacity="0.96"/>
-<path d="M760,300 C700,360 700,520 760,600 Z" fill="#5c7444" opacity="0.9"/>
-<g fill="#6b8e4e" stroke="#4e6a38" stroke-width="2"><circle cx="330" cy="470" r="34"/><circle cx="300" cy="500" r="26"/><circle cx="250" cy="1120" r="30"/><circle cx="470" cy="1180" r="24"/><circle cx="600" cy="980" r="30"/><circle cx="640" cy="1030" r="22"/></g>
-<path d="M560,-10 C520,120 470,220 400,300 C320,390 200,430 90,470 C10,500 -20,520 -30,540" fill="none" stroke="#8f8f88" stroke-width="26" stroke-linecap="round"/>
-<path d="M560,-10 C520,120 470,220 400,300 C320,390 200,430 90,470 C10,500 -20,520 -30,540" fill="none" stroke="#c9c9c2" stroke-width="3" stroke-dasharray="10 14"/>
-<path d="M600,-10 C640,300 660,700 660,1100 C660,1500 650,1800 640,2010" fill="none" stroke="#8f8f88" stroke-width="26" stroke-linecap="round"/>
-<path d="M600,-10 C640,300 660,700 660,1100 C660,1500 650,1800 640,2010" fill="none" stroke="#c9c9c2" stroke-width="3" stroke-dasharray="10 14"/>
-<path d="M430,300 C450,430 470,560 500,700 C525,820 540,960 520,1080 C505,1180 430,1240 360,1340 C300,1430 330,1560 300,1660" fill="none" stroke="#cbb083" stroke-width="34" stroke-linecap="round"/>
-<path d="M520,760 C560,800 610,820 650,830" fill="none" stroke="#cbb083" stroke-width="26" stroke-linecap="round"/>
-<rect x="330" y="330" width="270" height="330" rx="18" fill="#9fb86e" stroke="#7d5a34" stroke-width="4" stroke-dasharray="2 10"/>
-<rect x="560" y="360" width="150" height="420" rx="16" fill="#a3bc72" stroke="#7d5a34" stroke-width="4" stroke-dasharray="2 10"/>
-<rect x="120" y="640" width="260" height="240" rx="10" fill="url(#tilled)" stroke="#8a6a44" stroke-width="4"/>
-<rect x="60" y="1120" width="420" height="560" rx="22" fill="#9fb86e" stroke="#7d5a34" stroke-width="4" stroke-dasharray="2 10"/>
-<ellipse cx="470" cy="980" rx="86" ry="60" fill="#6fb4d6" stroke="#4f8fb0" stroke-width="4"/><ellipse cx="450" cy="965" rx="16" ry="9" fill="#8fd0ea" opacity="0.7"/><ellipse cx="500" cy="995" rx="12" ry="7" fill="#8fd0ea" opacity="0.7"/>
-<g filter="url(#soft)"><rect x="560" y="820" width="120" height="90" fill="#b9a58a" stroke="#6e5a3e" stroke-width="3"/><polygon points="560,820 620,780 680,820" fill="#8a8f96" stroke="#6e5a3e" stroke-width="3"/><rect x="686" y="805" width="16" height="105" fill="#c0c4c9" stroke="#6e5a3e" stroke-width="2"/><rect x="600" y="930" width="90" height="70" fill="#f4efe6" stroke="#6e5a3e" stroke-width="3"/><polygon points="600,930 645,895 690,930" fill="#c0492f" stroke="#6e5a3e" stroke-width="3"/></g>
-<g filter="url(#soft)"><rect x="250" y="1580" width="90" height="70" fill="#a9917a" stroke="#6e5a3e" stroke-width="3"/><polygon points="250,1580 295,1548 340,1580" fill="#7d7f86" stroke="#6e5a3e" stroke-width="3"/></g>
-<g font-size="30" opacity="0.9"><text x="150" y="1300">🦙</text><text x="230" y="1360">🐐</text><text x="380" y="450">🐮</text><text x="620" y="470">🐄</text><text x="120" y="1520">🦙</text></g>
-</svg>`;
-// Pen zones over the farm art — {left,top,w,h} as % of the map, matched to a
-// folder by species+sex (id filled from /placements pens at load).
-// Pen drop-zones over the REAL field regions of the SVG map (viewBox 760x2000).
-// x/y/w/h are % of the map. Fields: top-center pasture (y16-33), right pasture
-// (x74-93,y18-39), big bottom-left paddock (x8-63,y56-84), barn cluster
-// (x74-92,y41-50), pond (~62%x,49%y). (Pure presentation — tune freely.)
-const PEN_ZONES = [
-  // bottom-left big paddock — alpacas, goats, mules
+/* ============================ MAP (admin) — farm layout + drag animals into pens ============================
+   A painted SVG farm map (plans-hub style) traced from the real satellite layout.
+   Two modes:
+     • Normal: drag an animal token from the tray onto a pen (saves position + pen via POST /place).
+     • Edit ("Edit layout"): drag/resize the PENS and drag the map FEATURES (barn,
+       farmhouse, cabin, pond, roads, fields) to match the real fencing; Save persists
+       the whole layout via POST /layout. Everything renders from that layout over defaults. */
+const MAP_ART = {w:800, h:2000};   // SVG viewBox
+
+// ---- static painted backdrop (ground + woods + tree dots) — not individually draggable ----
+const FARM_BACKDROP = `
+<rect x="0" y="0" width="800" height="2000" fill="url(#grass)"/>
+<g filter="url(#sh)">
+<path d="M0,0 H340 C300,90 210,120 150,190 C90,255 70,360 40,430 C15,480 0,520 0,560 Z" fill="#5f7a44"/>
+<path d="M0,560 C70,610 60,760 20,880 C0,940 10,1040 0,1120 Z" fill="#5f7a44"/>
+<path d="M0,1360 C90,1410 100,1560 55,1690 C25,1780 40,1900 0,2000 Z" fill="#5f7a44"/>
+<path d="M0,1840 C220,1780 470,1900 660,1820 C740,1788 780,1880 800,1910 V2000 H0 Z" fill="#5f7a44"/>
+<path d="M800,260 C740,330 745,520 800,600 V260 Z" fill="#5f7a44"/>
+<path d="M800,1450 C755,1520 760,1660 800,1740 V1450 Z" fill="#5f7a44"/></g>
+<g fill="#6f9450" stroke="#4f6a37" stroke-width="2" opacity="0.95">
+<circle cx="70" cy="120" r="30"/><circle cx="150" cy="90" r="24"/><circle cx="40" cy="200" r="26"/>
+<circle cx="350" cy="520" r="30"/><circle cx="320" cy="560" r="22"/><circle cx="280" cy="1180" r="28"/>
+<circle cx="500" cy="1240" r="24"/><circle cx="650" cy="1030" r="30"/><circle cx="690" cy="1080" r="20"/><circle cx="120" cy="1500" r="26"/></g>`;
+
+// ---- draggable FEATURES: each drawn at its own origin, positioned by {x,y} (map px) ----
+// `d(...)` = the inner SVG for the feature, drawn around (0,0)-ish so translate moves it cleanly.
+const FEATURE_DEFS = {
+  nelsonRd:  {label:'Nelson Cemetery Rd', x:0, y:0, kind:'path', big:true, d:`
+    <path d="M540,20 C505,140 460,235 395,310 C320,395 205,435 110,470 C70,485 45,495 30,505" fill="none" stroke="#8f8f88" stroke-width="30" stroke-linecap="round"/>
+    <path d="M540,20 C505,140 460,235 395,310 C320,395 205,435 110,470 C70,485 45,495 30,505" fill="none" stroke="#d7d7cf" stroke-width="3" stroke-dasharray="12 16"/>`},
+  taylorRd:  {label:'Taylor Crossroads Rd', x:0, y:0, kind:'path', big:true, d:`
+    <path d="M600,20 C640,300 655,700 650,1100 C646,1470 635,1760 625,1980" fill="none" stroke="#8f8f88" stroke-width="30" stroke-linecap="round"/>
+    <path d="M600,20 C640,300 655,700 650,1100 C646,1470 635,1760 625,1980" fill="none" stroke="#d7d7cf" stroke-width="3" stroke-dasharray="12 16"/>`},
+  driveway:  {label:'Driveway', x:0, y:0, kind:'path', big:true, d:`
+    <path d="M430,300 C452,430 472,560 500,700 C524,820 540,960 520,1080 C505,1180 435,1245 365,1345 C305,1435 335,1560 305,1670" fill="none" stroke="#d8bd8c" stroke-width="36" stroke-linecap="round"/>
+    <path d="M520,760 C560,800 610,822 655,832" fill="none" stroke="#d8bd8c" stroke-width="28" stroke-linecap="round"/>`},
+  topField:  {label:'Top pasture', x:335, y:330, kind:'rect', d:`<rect x="0" y="0" width="255" height="320" rx="20" fill="#a6bf74" stroke="#8a6238" stroke-width="5" stroke-dasharray="3 13"/>`},
+  rightField:{label:'Right pasture', x:560, y:360, kind:'rect', d:`<rect x="0" y="0" width="150" height="400" rx="18" fill="#aac378" stroke="#8a6238" stroke-width="5" stroke-dasharray="3 13"/>`},
+  bottomField:{label:'Bottom paddock', x:70, y:1130, kind:'rect', d:`<rect x="0" y="0" width="410" height="540" rx="24" fill="#a6bf74" stroke="#8a6238" stroke-width="5" stroke-dasharray="3 13"/>`},
+  tilled:    {label:'Tilled field', x:130, y:650, kind:'rect', d:`<rect x="0" y="0" width="255" height="230" rx="12" fill="url(#till)" stroke="#8a6a44" stroke-width="5"/>`},
+  pond:      {label:'Pond', x:382, y:923, kind:'blob', d:`<g filter="url(#sh)"><ellipse cx="88" cy="62" rx="88" ry="62" fill="url(#pondg)" stroke="#4a8aab" stroke-width="4"/><ellipse cx="66" cy="45" rx="15" ry="8" fill="#c4e9f5" opacity="0.7"/><ellipse cx="116" cy="77" rx="11" ry="6" fill="#c4e9f5" opacity="0.6"/></g>`},
+  barn:      {label:'Barn', x:556, y:772, kind:'bldg', d:`<g filter="url(#sh)"><rect x="4" y="48" width="130" height="95" fill="#c2ad90" stroke="#6e5236" stroke-width="4"/><rect x="4" y="48" width="130" height="20" fill="#a98f6e"/><polygon points="0,48 69,0 138,48" fill="#9aa0a6" stroke="#6e5236" stroke-width="4"/><polygon points="0,48 69,0 69,48" fill="#8a9096"/><rect x="54" y="90" width="34" height="53" fill="#7a5c3c" stroke="#5a4026" stroke-width="2"/><rect x="140" y="28" width="18" height="115" fill="#c8ccd0" stroke="#6e5236" stroke-width="2"/><ellipse cx="149" cy="28" rx="9" ry="5" fill="#dfe3e6" stroke="#6e5236" stroke-width="2"/></g>`},
+  farmhouse: {label:'Farmhouse', x:596, y:896, kind:'bldg', d:`<g filter="url(#sh)"><rect x="4" y="39" width="95" height="72" fill="#f6f1e8" stroke="#6e5236" stroke-width="4"/><polygon points="0,39 51,0 102,39" fill="#c0492f" stroke="#6e5236" stroke-width="4"/><polygon points="0,39 51,0 51,39" fill="#a83e28"/><rect x="40" y="76" width="22" height="35" fill="#7a5c3c"/><rect x="12" y="56" width="16" height="16" fill="#bcd6e0" stroke="#6e5236" stroke-width="2"/><rect x="76" y="56" width="16" height="16" fill="#bcd6e0" stroke="#6e5236" stroke-width="2"/></g>`},
+  cabin:     {label:'Cabin', x:246, y:1546, kind:'bldg', d:`<g filter="url(#sh)"><rect x="4" y="39" width="95" height="72" fill="#b09378" stroke="#6e5236" stroke-width="4"/><polygon points="0,39 51,0 102,39" fill="#7f8288" stroke="#6e5236" stroke-width="4"/><rect x="106" y="14" width="12" height="97" fill="#8a8074"/><rect x="39" y="76" width="24" height="35" fill="#5a4026"/></g>`},
+};
+// draw order (back to front)
+const FEATURE_ORDER = ['nelsonRd','taylorRd','driveway','topField','rightField','bottomField','tilled','pond','barn','farmhouse','cabin'];
+
+// ---- default pen zones (over the fields) — x/y/w/h as % of the map ----
+const PEN_DEFAULTS = [
   {key:'Alpaca|female', label:'Alpaca Girls',  x:10, y:60, w:22, h:9,  emoji:'🦙'},
   {key:'Alpaca|male',   label:'Alpaca Boys',   x:10, y:72, w:22, h:9,  emoji:'🦙'},
   {key:'Goat|female',   label:'Goat Does',     x:36, y:60, w:20, h:9,  emoji:'🐐'},
   {key:'Goat|male',     label:'Goat Bucks',    x:36, y:72, w:20, h:9,  emoji:'🐐'},
   {key:'Mule|',         label:'Mules',         x:10, y:84, w:22, h:7,  emoji:'🐴'},
-  // top-center pasture — cattle
   {key:'Cattle|female', label:'Cattle Cows',   x:45, y:18, w:22, h:6,  emoji:'🐮'},
   {key:'Cattle|male',   label:'Cattle Bulls',  x:45, y:26, w:22, h:6,  emoji:'🐮'},
-  // right pasture — turkeys
-  {key:'Turkey|female', label:'Turkey Hens',   x:75, y:20, w:20, h:6,  emoji:'🦃'},
-  {key:'Turkey|male',   label:'Turkey Toms',   x:75, y:30, w:20, h:6,  emoji:'🦃'},
-  // by the barn cluster — chickens + pigs
-  {key:'Chicken|female',label:'Hens',          x:75, y:42, w:18, h:5,  emoji:'🐔'},
-  {key:'Chicken|male',  label:'Roosters',      x:75, y:49, w:18, h:5,  emoji:'🐔'},
+  {key:'Turkey|female', label:'Turkey Hens',   x:74, y:20, w:20, h:6,  emoji:'🦃'},
+  {key:'Turkey|male',   label:'Turkey Toms',   x:74, y:30, w:20, h:6,  emoji:'🦃'},
+  {key:'Chicken|female',label:'Hens',          x:74, y:42, w:18, h:5,  emoji:'🐔'},
+  {key:'Chicken|male',  label:'Roosters',      x:74, y:49, w:18, h:5,  emoji:'🐔'},
   {key:'Pig|',          label:'Pigs',          x:36, y:84, w:20, h:7,  emoji:'🐷'},
-  // ducks by the pond
   {key:'Ducks|',        label:'Ducks',         x:52, y:44, w:16, h:6,  emoji:'🦆'},
 ];
-let M=null;  // {pens, placements, view:{scale,tx,ty}, drag}
+
+let M=null;  // {pens, features, placements, view, fit, edit, dirty}
+
 function penForZone(z){
   const [sp,sx]=z.key.split('|');
   return (M.pens||[]).find(f=>spMatch(sp,f.species)&&((f.sex||'')===(sx||''))) ||
          (M.pens||[]).find(f=>spMatch(sp,f.species)&&!sx);
 }
-function penById(id){ return (M.pens||[]).find(f=>f.id===id); }
+// The list of Drive pens (folders) comes from /placements; matched to a zone by key.
+let PEN_FOLDERS=[];
+
 function startMap(){
   $('view').innerHTML=`<div class="stage card" style="text-align:center"><div class="prompt">Rolling out the map…</div><div class="big">🗺️</div></div>`;
-  api('/placements').then(d=>{
-    M={pens:(d&&d.pens)||[], placements:(d&&d.placements)||{}, view:{scale:1,tx:0,ty:0}, fit:1, drag:null};
+  Promise.all([api('/placements'), api('/layout').catch(()=>({layout:{}}))]).then(([p,l])=>{
+    PEN_FOLDERS=(p&&p.pens)||[];
+    M={pens:PEN_FOLDERS, placements:(p&&p.placements)||{}, view:{scale:1,tx:0,ty:0}, fit:1, edit:false, dirty:false};
+    const saved=(l&&l.layout)||{};
+    // merge saved pen positions over defaults (by label), and feature positions over defaults
+    M.zones=PEN_DEFAULTS.map(d=>Object.assign({}, d, (saved.pens&&saved.pens[d.label])||{}));
+    M.features={}; FEATURE_ORDER.forEach(id=>{ const f=FEATURE_DEFS[id]; M.features[id]={x:f.x,y:f.y, ...(saved.features&&saved.features[id]||{})}; });
     renderMap();
   }).catch(()=>{$('view').innerHTML=`<div class="card empty">The map needs the live farm connection.</div>`;});
 }
-function unplacedAnimals(){
-  return (HERD.individuals||[]).filter(a=>!(M.placements[a.id]&&typeof M.placements[a.id].x==='number'));
+function unplacedAnimals(){ return (HERD.individuals||[]).filter(a=>!(M.placements[a.id]&&typeof M.placements[a.id].x==='number')); }
+
+function farmSVG(){
+  const feats=FEATURE_ORDER.map(id=>{
+    const f=FEATURE_DEFS[id], p=M.features[id];
+    return `<g class="feat" data-feat="${id}" transform="translate(${p.x},${p.y})">${f.d}</g>`;
+  }).join('');
+  return `<svg class="mapart" id="mapart" viewBox="0 0 ${MAP_ART.w} ${MAP_ART.h}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" font-family="Georgia,serif">
+    <defs>
+      <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b3c884"/><stop offset="1" stop-color="#93ad66"/></linearGradient>
+      <radialGradient id="pondg" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stop-color="#9ed6ec"/><stop offset="1" stop-color="#5aa0c4"/></radialGradient>
+      <pattern id="till" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(24)"><rect width="16" height="16" fill="#c39468"/><rect width="16" height="6" fill="#a97b4f"/></pattern>
+      <filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#2e2413" flood-opacity="0.28"/></filter>
+    </defs>
+    ${FARM_BACKDROP}
+    ${feats}
+  </svg>`;
 }
 function renderMap(){
   const placed=(HERD.individuals||[]).filter(a=>M.placements[a.id]&&typeof M.placements[a.id].x==='number');
   const tray=unplacedAnimals();
-  // pen zones (drop targets) with a wooden-sign label
-  const zones=PEN_ZONES.map((z,i)=>{
+  const zones=M.zones.map((z,i)=>{
     const pen=penForZone(z);
     const n=placed.filter(a=>M.placements[a.id].pen===(pen&&pen.id)).length;
-    return `<div class="penzone" data-zone="${i}" style="left:${z.x}%;top:${z.y}%;width:${z.w}%;height:${z.h}%">
-      <div class="pensign">${z.emoji} ${esc(z.label)}${n?` <b>${n}</b>`:''}</div></div>`;
+    return `<div class="penzone${M.edit?' editing':''}" data-zone="${i}" style="left:${z.x}%;top:${z.y}%;width:${z.w}%;height:${z.h}%">
+      <span class="sign"><span class="plank">${z.emoji} ${esc(z.label)}${n?`<span class="sub">${n} here</span>`:''}</span><span class="post"></span></span>
+      ${M.edit?'<span class="rz"></span>':''}</div>`;
   }).join('');
-  // placed tokens on the map
-  const tokens=placed.map(a=>{
-    const p=M.placements[a.id];
-    return tokenHTML(a,`left:${p.x*100}%;top:${p.y*100}%`,'onmap');
-  }).join('');
+  const tokens=M.edit?'':placed.map(a=>{ const p=M.placements[a.id]; return tokenHTML(a,`left:${p.x*100}%;top:${p.y*100}%`,'onmap'); }).join('');
   $('view').innerHTML=`
-    <div class="maphint">Drag an animal onto its pen. Pinch or use ＋/－ to zoom.</div>
-    <div class="mapstage" id="mapstage">
+    <div class="maphint">${M.edit?'✏️ Edit mode — drag the signs &amp; features to match your fencing; drag a corner to resize a pen.':'Drag an animal onto its pen. Pinch or ＋/－ to zoom.'}</div>
+    <div class="mapframe"><div class="mapstage${M.edit?' editing':''}" id="mapstage">
       <div class="mapworld" id="mapworld">
-        ${FARM_SVG}
-        <div class="penlayer">${zones}</div>
+        ${farmSVG()}
+        <div class="penlayer" id="penlayer">${zones}</div>
         <div class="tokenlayer" id="tokenlayer">${tokens}</div>
       </div>
       <div class="mapctrls">
         <button class="ctrlbtn" onclick="mapZoom(1.25)">＋</button>
         <button class="ctrlbtn" onclick="mapZoom(0.8)">－</button>
-        <button class="ctrlbtn" onclick="mapReset()">⟳</button>
+        <button class="ctrlbtn" onclick="mapReset()" title="Fit whole map">⟳</button>
       </div>
+    </div></div>
+    <div class="editbar">
+      <button class="btn ${M.edit?'accent':'ghost'}" onclick="toggleEdit()">${M.edit?'Done editing':'✏️ Edit layout'}</button>
+      ${M.edit?`<button class="btn" onclick="saveLayout()" ${M.dirty?'':'disabled style=opacity:.5'}>Save layout</button><button class="btn ghost" onclick="resetLayout()">Reset to default</button>`:''}
     </div>
-    <div class="tray" id="tray">
-      <div class="traylbl">${tray.length} to place · drag onto the map</div>
-      <div class="trayrow">${tray.map(a=>tokenHTML(a,'','tray')).join('')||'<span style="color:var(--muted);padding:8px">Everyone is placed! 🎉</span>'}</div>
-    </div>`;
-  sizeWorld();          // give the world an explicit pixel box (map aspect)
-  fitMap();             // compute fit-scale + center so the WHOLE map shows
-  wireMapPanZoom();
-  wireTokenDrag();
-}
-// Size the world to the map's pixel box: width = stage width, height keeps the
-// map aspect (viewBox h/w). Then transforms scale/translate this fixed box.
-function sizeWorld(){
-  const stage=$('mapstage'), w=$('mapworld'); if(!stage||!w) return;
-  const sw=stage.clientWidth;
-  w.style.width=sw+'px';
-  w.style.height=(sw*MAP_ART.h/MAP_ART.w)+'px';
+    ${M.edit?'':`<div class="tray" id="tray"><div class="traylbl">${tray.length} to place · drag onto the map</div>
+      <div class="trayrow">${tray.map(a=>tokenHTML(a,'','tray')).join('')||'<span style="color:var(--muted);padding:8px">Everyone is placed! 🎉</span>'}</div></div>`}`;
+  sizeWorld(); fitMap(); wireMapPanZoom();
+  if(M.edit) wireEditDrag(); else wireTokenDrag();
 }
 function tokenHTML(a,style,cls){
   const img=primary(a);
   const face=img?`<img src="${img}" alt="">`:`<span class="tkemoji">${emoji(a.species)}</span>`;
   return `<div class="token ${cls}" data-aid="${esc(a.id)}" style="${style}" title="${esc(a.name)}">${face}<span class="tkname">${esc(a.name)}</span></div>`;
 }
+function sizeWorld(){ const stage=$('mapstage'), w=$('mapworld'); if(!stage||!w) return; const sw=stage.clientWidth; w.style.width=sw+'px'; w.style.height=(sw*MAP_ART.h/MAP_ART.w)+'px'; }
 function applyMapView(){ const w=$('mapworld'); if(w){ const v=M.view; w.style.transform=`translate(${v.tx}px,${v.ty}px) scale(${v.scale})`; } }
-// fit-scale = the scale at which the whole world height fits the stage; that's
-// the minimum zoom, so you can always see the entire map. Default view = fit, centered.
-function fitMap(){
-  const stage=$('mapstage'), w=$('mapworld'); if(!stage||!w) return;
-  const sh=stage.clientHeight, wh=w.clientHeight||1, ww=w.clientWidth||1;
-  M.fit=Math.min(1, sh/wh);                       // shrink so full height fits (never upscale past 1)
-  M.view.scale=M.fit;
-  M.view.tx=(stage.clientWidth - ww*M.fit)/2;     // center horizontally
-  M.view.ty=(sh - wh*M.fit)/2;                    // center vertically
-  applyMapView();
-}
-function mapZoom(f){
-  const min=M.fit||0.2;
-  M.view.scale=Math.max(min,Math.min(4,M.view.scale*f));
-  applyMapView();
-}
+function fitMap(){ const stage=$('mapstage'), w=$('mapworld'); if(!stage||!w) return; const sh=stage.clientHeight, wh=w.clientHeight||1, ww=w.clientWidth||1; M.fit=Math.min(1, sh/wh); M.view.scale=M.fit; M.view.tx=(stage.clientWidth-ww*M.fit)/2; M.view.ty=(sh-wh*M.fit)/2; applyMapView(); }
+function mapZoom(f){ const min=M.fit||0.2; M.view.scale=Math.max(min,Math.min(4,M.view.scale*f)); applyMapView(); }
 function mapReset(){ fitMap(); }
 function wireMapPanZoom(){
   const stage=$('mapstage'); if(!stage) return;
   let px=0,py=0,panning=false,pinchD=0;
-  stage.addEventListener('pointerdown',e=>{ if(e.target.closest('.token'))return; panning=true; px=e.clientX; py=e.clientY; });
+  stage.addEventListener('pointerdown',e=>{ if(e.target.closest('.token,.penzone,.feat'))return; panning=true; px=e.clientX; py=e.clientY; });
   stage.addEventListener('pointermove',e=>{ if(!panning)return; M.view.tx+=e.clientX-px; M.view.ty+=e.clientY-py; px=e.clientX; py=e.clientY; applyMapView(); });
   window.addEventListener('pointerup',()=>{ panning=false; });
   stage.addEventListener('wheel',e=>{ e.preventDefault(); mapZoom(e.deltaY<0?1.12:0.9); },{passive:false});
-  // pinch
   stage.addEventListener('touchmove',e=>{ if(e.touches.length===2){ e.preventDefault(); const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); if(pinchD) mapZoom(d/pinchD); pinchD=d; } },{passive:false});
   stage.addEventListener('touchend',()=>{ pinchD=0; });
 }
-/* --- token drag (mouse + touch) onto pen zones --- */
-function wireTokenDrag(){
-  const layer=$('view');
-  let cur=null, ghost=null;
+
+/* ---------- EDIT MODE: drag/resize pens + drag features ---------- */
+function toggleEdit(){ M.edit=!M.edit; renderMap(); }
+function resetLayout(){ if(!confirm('Reset all pen & feature positions to the default layout?'))return;
+  M.zones=PEN_DEFAULTS.map(d=>Object.assign({},d));
+  M.features={}; FEATURE_ORDER.forEach(id=>{ const f=FEATURE_DEFS[id]; M.features[id]={x:f.x,y:f.y}; });
+  M.dirty=true; renderMap();
+}
+function saveLayout(){
+  const layout={pens:{}, features:{}};
+  M.zones.forEach(z=>{ layout.pens[z.label]={x:z.x,y:z.y,w:z.w,h:z.h}; });
+  FEATURE_ORDER.forEach(id=>{ layout.features[id]={x:M.features[id].x,y:M.features[id].y}; });
+  post('/layout',{layout}).then(r=>{ if(r&&r.ok){ M.dirty=false; toast('Layout saved ✓','ok'); renderMap(); } else toast('Save failed','err'); }).catch(()=>toast('Network error','err'));
+}
+// convert a client delta to map-% (pens) or map-px (features), accounting for zoom
+function artRect(){ return $('mapart').getBoundingClientRect(); }
+function wireEditDrag(){
+  const stage=$('mapstage'); if(!stage) return;
+  let mode=null, target=null, startX=0, startY=0, orig=null;
   function down(e){
-    const tk=e.target.closest('.token'); if(!tk) return;
-    e.preventDefault();
-    const aid=tk.dataset.aid;
-    cur={aid, tk};
-    ghost=tk.cloneNode(true); ghost.classList.add('dragghost');
-    document.body.appendChild(ghost);
-    moveGhost(e); tk.classList.add('dragging');
-    document.addEventListener('pointermove',move);
-    document.addEventListener('pointerup',up);
+    const rz=e.target.closest('.rz'); const pz=e.target.closest('.penzone'); const ft=e.target.closest('.feat');
+    if(rz){ mode='resize'; target=pz; orig={w:+pz.style.width.replace('%',''),h:+pz.style.height.replace('%','')}; }
+    else if(pz){ mode='movePen'; target=pz; orig={x:+pz.style.left.replace('%',''),y:+pz.style.top.replace('%','')}; }
+    else if(ft){ mode='moveFeat'; target=ft; const i=ft.dataset.feat; orig={x:M.features[i].x,y:M.features[i].y}; }
+    else return;
+    e.preventDefault(); e.stopPropagation();
+    startX=e.clientX; startY=e.clientY;
+    document.addEventListener('pointermove',move); document.addEventListener('pointerup',up);
   }
+  function move(e){
+    if(!mode)return; e.preventDefault();
+    const r=artRect(); const dxp=(e.clientX-startX)/r.width*100, dyp=(e.clientY-startY)/r.height*100;
+    if(mode==='movePen'){ const i=+target.dataset.zone; const nx=Math.max(0,Math.min(96,orig.x+dxp)), ny=Math.max(0,Math.min(97,orig.y+dyp));
+      M.zones[i].x=nx; M.zones[i].y=ny; target.style.left=nx+'%'; target.style.top=ny+'%'; }
+    else if(mode==='resize'){ const i=+target.dataset.zone; const nw=Math.max(6,Math.min(60,orig.w+dxp)), nh=Math.max(4,Math.min(40,orig.h+dyp));
+      M.zones[i].w=nw; M.zones[i].h=nh; target.style.width=nw+'%'; target.style.height=nh+'%'; }
+    else if(mode==='moveFeat'){ const id=target.dataset.feat; const dxpx=(e.clientX-startX)/r.width*MAP_ART.w, dypx=(e.clientY-startY)/r.height*MAP_ART.h;
+      const nx=orig.x+dxpx, ny=orig.y+dypx; M.features[id].x=nx; M.features[id].y=ny; target.setAttribute('transform',`translate(${nx},${ny})`); }
+  }
+  function up(){ document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); if(mode){ M.dirty=true; refreshSaveBtn(); } mode=null; target=null; }
+  stage.addEventListener('pointerdown',down);
+}
+function refreshSaveBtn(){ const b=[...document.querySelectorAll('.editbar .btn')].find(x=>x.textContent==='Save layout'); if(b){ b.disabled=false; b.style.opacity=1; } }
+
+/* ---------- NORMAL MODE: drag an animal token onto a pen ---------- */
+function wireTokenDrag(){
+  const layer=$('view'); let cur=null, ghost=null;
+  function down(e){ const tk=e.target.closest('.token'); if(!tk)return; e.preventDefault();
+    cur={aid:tk.dataset.aid, tk}; ghost=tk.cloneNode(true); ghost.classList.add('dragghost'); document.body.appendChild(ghost);
+    moveGhost(e); tk.classList.add('dragging'); document.addEventListener('pointermove',move); document.addEventListener('pointerup',up); }
   function moveGhost(e){ if(ghost){ ghost.style.left=(e.clientX-26)+'px'; ghost.style.top=(e.clientY-26)+'px'; } }
   function move(e){ if(!cur)return; e.preventDefault(); moveGhost(e); highlightZoneAt(e.clientX,e.clientY); }
-  function up(e){
-    document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up);
-    if(cur&&cur.tk) cur.tk.classList.remove('dragging');
-    document.querySelectorAll('.penzone.hot').forEach(z=>z.classList.remove('hot'));
-    if(ghost){ ghost.remove(); ghost=null; }
-    if(cur) dropToken(cur.aid, e.clientX, e.clientY);
-    cur=null;
-  }
+  function up(e){ document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up);
+    if(cur&&cur.tk) cur.tk.classList.remove('dragging'); document.querySelectorAll('.penzone.hot').forEach(z=>z.classList.remove('hot'));
+    if(ghost){ ghost.remove(); ghost=null; } if(cur) dropToken(cur.aid, e.clientX, e.clientY); cur=null; }
   layer.addEventListener('pointerdown',down);
 }
-function zoneAt(cx,cy){
-  const zones=[...document.querySelectorAll('.penzone')];
-  for(const z of zones){ const r=z.getBoundingClientRect(); if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom) return z; }
-  return null;
-}
-function highlightZoneAt(cx,cy){
-  const z=zoneAt(cx,cy);
-  document.querySelectorAll('.penzone.hot').forEach(x=>{ if(x!==z) x.classList.remove('hot'); });
-  if(z) z.classList.add('hot');
-}
+function zoneAt(cx,cy){ for(const z of [...document.querySelectorAll('.penzone')]){ const r=z.getBoundingClientRect(); if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom) return z; } return null; }
+function highlightZoneAt(cx,cy){ const z=zoneAt(cx,cy); document.querySelectorAll('.penzone.hot').forEach(x=>{ if(x!==z) x.classList.remove('hot'); }); if(z) z.classList.add('hot'); }
 function dropToken(aid, cx, cy){
-  const art=$('mapart'); if(!art) return;
-  const r=art.getBoundingClientRect();
-  const x=Math.max(0,Math.min(1,(cx-r.left)/r.width));
-  const y=Math.max(0,Math.min(1,(cy-r.top)/r.height));
-  const z=zoneAt(cx,cy);
-  const a=(HERD.individuals||[]).find(x=>x.id===aid);
-  const body={aid, x, y};
-  let penName='the open field';
-  if(z){
-    const zone=PEN_ZONES[+z.dataset.zone];
-    const pen=penForZone(zone);
-    body.pen=pen?pen.id:'';
-    penName=zone.label;
-    // species sanity check — warn but allow (Steve knows best)
-    const [sp]=zone.key.split('|');
-    if(a&&a.species&&!spMatch(sp,a.species)) toast(`Note: ${esc(a.name)} is a ${esc(a.species)} — placed in ${esc(zone.label)} anyway`,'');
-  } else { body.pen=''; }
-  // optimistic local update + persist
+  const r=artRect(); const x=Math.max(0,Math.min(1,(cx-r.left)/r.width)), y=Math.max(0,Math.min(1,(cy-r.top)/r.height));
+  const z=zoneAt(cx,cy); const a=(HERD.individuals||[]).find(x=>x.id===aid); const body={aid,x,y}; let penName='the open field';
+  if(z){ const zone=M.zones[+z.dataset.zone]; const pen=penForZone(zone); body.pen=pen?pen.id:''; penName=zone.label;
+    const [sp]=zone.key.split('|'); if(a&&a.species&&!spMatch(sp,a.species)) toast(`Note: ${esc(a.name)} is a ${esc(a.species)} — placed in ${esc(zone.label)} anyway`,''); }
+  else body.pen='';
   M.placements[aid]=Object.assign({},M.placements[aid],{x,y,pen:body.pen});
-  post('/place',body).then(r=>{
-    if(r&&r.ok){ toast(`${esc(a?a.name:'Animal')} → ${esc(penName)} ✓`,'ok'); }
-    else { toast((r&&r.error)||'Save failed','err'); }
-  }).catch(()=>toast('Network error','err'));
+  post('/place',body).then(r=>{ if(r&&r.ok) toast(`${esc(a?a.name:'Animal')} → ${esc(penName)} ✓`,'ok'); else toast((r&&r.error)||'Save failed','err'); }).catch(()=>toast('Network error','err'));
   renderMap();
 }
 
