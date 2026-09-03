@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#4b6b3c">
-<meta name="robots" content="noindex, nofollow">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://tapestryacres.com/herd">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg">
 <title>Tapestry Acres — Meet the Herd</title>
@@ -27,6 +28,7 @@
     padding:0 14px calc(84px + env(safe-area-inset-bottom)) 14px;}
   .wrap{max-width:640px;margin:0 auto;}
   a{color:var(--forest)}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
   /* ---- header ---- */
   header{padding:calc(16px + env(safe-area-inset-top)) 2px 4px;}
@@ -83,11 +85,11 @@
   .tcard .ph img{width:100%;height:100%;object-fit:cover;}
   .tcard.soon .ph::after{content:"📷 soon";position:absolute;bottom:7px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;color:#fff;background:rgba(45,35,20,.6);padding:3px 9px;border-radius:999px;}
   .pcount{position:absolute;right:7px;bottom:7px;font-size:10.5px;font-weight:700;background:rgba(45,35,20,.62);color:#fff;padding:2px 8px;border-radius:999px;}
-  .tcard .b{padding:10px 12px 12px;}
+  .tcard .b{display:block;padding:10px 12px 12px;}
   .tcard .nm{font-family:var(--serif);font-size:16px;font-weight:700;margin:0;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-  .tcard .sp{font-size:12px;color:var(--muted);margin:2px 0 0;}
+  .tcard .sp{display:block;font-size:12px;color:var(--muted);margin:2px 0 0;}
   .tcard .ft{font-size:11px;color:var(--muted);margin:6px 0 0;font-style:italic;line-height:1.35;}
-  .tcard.open{border:1.5px dashed var(--forest);cursor:pointer;}
+  .tcard.open{display:block;width:100%;padding:0;text-align:left;font:inherit;color:inherit;border:1.5px dashed var(--forest);cursor:pointer;}
   .namecta{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:800;color:#fff;background:var(--forest);padding:3px 10px;border-radius:999px;white-space:nowrap;}
   .sectlbl{grid-column:1/-1;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 2px 0;}
   .sectlbl.help{color:var(--forest);}
@@ -223,7 +225,7 @@
     <div class="brand"><span class="leaf">🌾</span><h1>Meet the Herd</h1></div>
     <p class="sub" id="sub"><span class="conn" id="conn"></span>Tapestry Acres</p>
   </header>
-  <div id="view"></div>
+  <main id="view"></main>
   <p class="foot" id="foot"></p>
 </div>
 
@@ -310,8 +312,8 @@ function renderTabs(){
   const bar=$('tabbar');
   bar.innerHTML=TABS.filter(t=>!t.admin||ADMIN).map(t=>{
     const n=t.cnt?t.cnt(HERD):0;
-    return `<button data-k="${t.k}" onclick="setTab('${t.k}')" class="${TAB===t.k?'on':''}">
-      ${n?`<span class="cnt">${n}</span>`:''}<span class="ic">${t.ic}</span>${esc(t.label)}</button>`;
+    return `<button data-k="${t.k}" onclick="setTab('${t.k}')" class="${TAB===t.k?'on':''}" aria-pressed="${TAB===t.k?'true':'false'}">
+      ${n?`<span class="cnt">${n}</span>`:''}<span class="ic" aria-hidden="true">${t.ic}</span>${esc(t.label)}</button>`;
   }).join('');
 }
 function setTab(t){
@@ -328,9 +330,9 @@ let FILTER='all';
 function speciesList(){const c={};(HERD.individuals||[]).forEach(a=>{const s=a.species||'Other';c[s]=(c[s]||0)+1;});return Object.keys(c).sort((x,y)=>c[y]-c[x]).map(s=>({s,n:c[s]}));}
 function renderHerd(){
   if(!HERD){ $('view').innerHTML=`<div class="card empty">Can't reach the farm right now.<br>Pull to refresh when you're back online.</div>`; return; }
-  const chips=[`<button class="pill chip ${FILTER==='all'?'on':''}" onclick="setFilter('all')">All</button>`]
-    .concat(speciesList().map(o=>`<button class="pill chip ${FILTER===o.s?'on':''}" onclick="setFilter('${esc(o.s)}')">${esc(o.s)} ${o.n}</button>`)).join('');
-  $('view').innerHTML=`<div class="tools"><input class="search" id="q" placeholder="Search a name…" oninput="drawHerd()"><div class="chips">${chips}</div></div><div class="count" id="cnt"></div><div class="grid" id="grid"></div>`;
+  const chips=[`<button class="pill chip ${FILTER==='all'?'on':''}" aria-pressed="${FILTER==='all'?'true':'false'}" onclick="setFilter('all')">All</button>`]
+    .concat(speciesList().map(o=>`<button class="pill chip ${FILTER===o.s?'on':''}" aria-pressed="${FILTER===o.s?'true':'false'}" onclick="setFilter('${esc(o.s)}')">${esc(o.s)} ${o.n}</button>`)).join('');
+  $('view').innerHTML=`<div class="tools"><label class="sr-only" for="q">Search the herd</label><input class="search" id="q" type="search" placeholder="Search a name…" oninput="drawHerd()"><div class="chips" aria-label="Filter by species">${chips}</div></div><div class="count" id="cnt" aria-live="polite"></div><div class="grid" id="grid"></div>`;
   drawHerd();
 }
 function setFilter(s){const q=(($('q')||{}).value||'');FILTER=s;renderHerd();const i=$('q');if(i&&q){i.value=q;drawHerd();}}
@@ -361,8 +363,8 @@ function tile(a){
 }
 function tileOpen(a){
   const np=(a.photos||[]).length;
-  const inner=(np?`<img src="${primary(a)}" alt="" loading="lazy">`:emoji(a.species))+`<span class="namecta">💡 Help name me</span>`;
-  return `<div class="tcard open" tabindex="0" onclick="openBoard('${esc(a.id)}')"><div class="ph">${inner}</div><div class="b"><p class="nm">Name this ${esc((a.species||'animal').toLowerCase())}</p><p class="sp">${esc(a.species||'')}${a.sex?(' · '+esc(a.sex)):''} · tap to suggest</p></div></div>`;
+  const inner=(np?`<img src="${primary(a)}" alt="Unnamed ${esc((a.species||'animal').toLowerCase())}" loading="lazy">`:`<span aria-hidden="true">${emoji(a.species)}</span>`)+`<span class="namecta"><span aria-hidden="true">💡</span> Help name me</span>`;
+  return `<button type="button" class="tcard open" onclick="openBoard('${esc(a.id)}')"><span class="ph">${inner}</span><span class="b"><span class="nm">Name this ${esc((a.species||'animal').toLowerCase())}</span><span class="sp">${esc(a.species||'')}${a.sex?(' · '+esc(a.sex)):''} · open suggestions</span></span></button>`;
 }
 function tileFlock(f){
   const sp=esc((f.species||'').toLowerCase()), c=f.count;
@@ -435,7 +437,7 @@ function renderQuiz(){
   let dis=shuffle(same).slice(0,3).filter(n=>n!==a.name);
   if(dis.length<3){const need=shuffle([...new Set(pool.filter(x=>x.id!==a.id).map(x=>x.name))].filter(n=>n!==a.name&&!dis.includes(n)));dis=dis.concat(need).slice(0,3);}
   const opts=shuffle([...new Set([a.name,...dis])]).slice(0,4);
-  $('view').innerHTML=`<div class="stage fade-enter"><div class="qbar"><span>Q <b>${quiz.i+1}</b>/${quiz.deck.length}</span><span>Score <b>${quiz.score}</b>${quiz.streak>1?` · <span style="color:var(--forest);font-weight:800">🔥 ${quiz.streak}</span>`:''}</span></div><div class="card"><div class="photo"><img src="${primary(a)}" alt=""></div><div class="prompt">Who is this ${esc((a.species||'animal').toLowerCase())}?</div><div class="choices" id="ch"></div><div class="learn" id="learn"></div></div></div>`;
+  $('view').innerHTML=`<div class="stage fade-enter"><div class="qbar"><span>Q <b>${quiz.i+1}</b>/${quiz.deck.length}</span><span>Score <b>${quiz.score}</b>${quiz.streak>1?` · <span style="color:var(--forest);font-weight:800">🔥 ${quiz.streak}</span>`:''}</span></div><div class="card"><div class="photo"><img src="${primary(a)}" alt="Quiz animal: ${esc((a.species||'animal').toLowerCase())}"></div><h2 class="prompt">Who is this ${esc((a.species||'animal').toLowerCase())}?</h2><div class="choices" id="ch"></div><div class="learn" id="learn" aria-live="polite"></div></div></div>`;
   const c=$('ch');let done=false;
   opts.forEach(o=>{const b=document.createElement('button');b.textContent=o;b.onclick=()=>{if(done)return;done=true;const ok=o===a.name;[...c.children].forEach(x=>{x.disabled=true;if(x.textContent===a.name)x.className='correct';});if(!ok)b.className='wrong';if(ok){quiz.score++;quiz.streak++;quiz.best=Math.max(quiz.best,quiz.streak);$('learn').innerHTML=`✓ Yes — that's <b>${esc(a.name)}</b>`;}else{quiz.streak=0;if(!quiz.misses.includes(a))quiz.misses.push(a);$('learn').innerHTML=`This is <b>${esc(a.name)}</b>`;}const nx=document.createElement('button');nx.className='btn block';nx.style.marginTop='12px';nx.textContent=quiz.i+1>=quiz.deck.length?'See results':'Next →';nx.onclick=()=>{quiz.i++;renderQuiz();};c.parentNode.appendChild(nx);};c.appendChild(b);});
 }
@@ -453,7 +455,7 @@ function startName(){
 }
 function curCrop(){ while(N.i<N.crops.length && N.skips.includes(N.crops[N.i].cid)) N.i++; return N.crops[N.i]||null; }
 function drawCrop(){
-  N.step='draw'; N.name=''; N.other=false; N.status='Active';
+  N.step='name'; N.name=''; N.other=false; N.status='Active';
   const c=curCrop(); N.cur=c;
   if(!c){ $('view').innerHTML=`<div class="stage card" style="text-align:center"><div class="prompt">The whole herd has names! 🎉</div><div class="big">✓ ${N.done}</div><div class="promptsub">${N.done?'You named '+N.done+' this session.':'Nothing left in the queue.'}</div><button class="btn block" onclick="setTab('herd')">Browse the herd</button></div>`; return; }
   renderNameStage();
@@ -472,11 +474,11 @@ function renderNameStage(){
     const sameSex=spAll.filter(a=>!c.sex||a.sex===c.sex);
     const showAll=N.other||!sameSex.length;
     const opts=(showAll?spAll:sameSex).map(a=>a.name).sort();
-    body=`${cropImg}<div class="prompt">Who is this?</div>
+    body=`${cropImg}<div class="prompt">Who is this ${esc(c.sex?c.sex+' ':'')}${esc((c.species||'animal').toLowerCase())}?</div>
       <div class="namelist">${opts.map(nm=>`<button class="pill" onclick="namePick('${esc(nm).replace(/'/g,"\\'")}')">${esc(nm)}</button>`).join('')||'<span style="color:var(--muted)">No existing names for this species yet.</span>'}</div>
       ${(!showAll&&spAll.length>sameSex.length)?`<button class="btn ghost block" onclick="nameOther()">Not here? Show all ${esc((c.species||'animals').toLowerCase())} ▾</button>`:''}
       <div class="newrow"><input id="newname" class="search" placeholder="✚ New name…" maxlength="40"><button class="btn" onclick="nameNew()">Add</button></div>
-      <button class="btn ghost block" style="margin-top:10px" onclick="drawCrop()">← Back</button>`;
+      <div class="btnrow" style="margin-top:10px"><button class="btn ghost" style="flex:1" onclick="nameSkip()">Skip</button>${ADMIN?`<button class="btn ghost" style="flex:1;color:var(--accent)" onclick="nameReject()">✕ Too poor</button>`:''}</div>`;
   } else if(N.step==='status'){
     body=`${cropImg}<div class="prompt"><b>${esc(N.name)}</b></div><div class="promptsub">What's their status?</div>
       <div class="statuses">${STATUSES.map(s=>`<button class="pill" onclick="nameStatus('${s}')"><span class="dot" style="background:${SCOLOR[s]}"></span>${s}</button>`).join('')}</div>
