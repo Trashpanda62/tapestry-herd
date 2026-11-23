@@ -240,6 +240,7 @@
     <p class="sub" id="sub"><span class="conn" id="conn"></span>Tapestry Acres</p>
   </header>
   <main id="view"></main>
+  <noscript><p style="text-align:center;padding:24px">Meet the Tapestry Acres herd needs JavaScript. You can read about every animal at <a href="https://tapestryacres.com/animals">tapestryacres.com/animals</a>.</p></noscript>
   <p class="foot" id="foot"></p>
 </div>
 
@@ -368,12 +369,13 @@ function drawHerd(){
     const fl=(HERD.flocks||[]).filter(f=>!q||[f.label,f.species,f.status].join(' ').toLowerCase().includes(q));
     if(fl.length){ html+=`<div class="sectlbl">Flocks &amp; groups</div>`; fl.forEach(f=>html+=tileFlock(f)); }
   }
+  let eager=0;html=html.replace(/loading="lazy"/g,m=>eager++<4?'loading="eager" fetchpriority="high"':m);
   $('grid').innerHTML=html||`<div class="empty">No matches.</div>`;
   $('cnt').textContent=`${withP.length} with photos · ${withP.length+noP.length+open.length} animals${FILTER==='all'?'':' ('+FILTER+')'}`;
 }
 function tile(a){
   const np=(a.photos||[]).length, soon=np?'':' soon';
-  const inner=np?`<img src="${primary(a)}" alt="${esc(a.name)}" loading="lazy">`+(np>1?`<span class="pcount">📷 ${np}</span>`:''):emoji(a.species);
+  const inner=np?`<img src="${primary(a)}" alt="${esc(a.name)}${a.species?', '+esc(a.species.toLowerCase()):''}" loading="lazy" decoding="async">`+(np>1?`<span class="pcount">📷 ${np}</span>`:''):emoji(a.species);
   const click=np?` role="button" tabindex="0" aria-label="View photos of ${esc(a.name)}" onclick="openViewer('${esc(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openViewer('${esc(a.id)}')}" style="cursor:pointer"`:'';
   return `<div class="tcard${soon}"><div class="ph"${click}>${inner}</div><div class="b"><p class="nm">${esc(a.name)} ${badge(a.status)}</p><p class="sp">${esc(a.species||'')}${a.sex?(' · '+esc(a.sex)):''}</p>${a.features&&a.features.length?`<p class="ft">${esc(a.features.join(' · '))}</p>`:''}${a.status==='For Sale'?`<p class="ft"><a href="https://tapestryacres.com/animals" style="display:inline-flex;align-items:center;min-height:40px;color:var(--forest);font-weight:700">Ask about this one</a></p>`:''}</div></div>`;
 }
