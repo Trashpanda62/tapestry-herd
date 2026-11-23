@@ -164,7 +164,7 @@
   .foot{font-size:11px;color:var(--muted);text-align:center;margin:24px 0 6px;}
   .conn{display:inline-block;width:8px;height:8px;border-radius:50%;background:#c9c2ad;margin-right:5px;vertical-align:middle;}
   .conn.live{background:var(--ok);} .conn.off{background:var(--accent);}
-  button:focus-visible,input:focus-visible,.tcard:focus-visible{outline:2px solid var(--forest);outline-offset:2px;}
+  button:focus-visible,input:focus-visible,.tcard:focus-visible,.ph[role=button]:focus-visible,.obclose:focus-visible{outline:2px solid var(--forest);outline-offset:2px;}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 
   /* ---- MAP tab (plans-hub painted styling) ---- */
@@ -368,7 +368,7 @@ function drawHerd(){
 function tile(a){
   const np=(a.photos||[]).length, soon=np?'':' soon';
   const inner=np?`<img src="${primary(a)}" alt="${esc(a.name)}" loading="lazy">`+(np>1?`<span class="pcount">📷 ${np}</span>`:''):emoji(a.species);
-  const click=np?` onclick="openViewer('${esc(a.id)}')" style="cursor:pointer"`:'';
+  const click=np?` role="button" tabindex="0" aria-label="View photos of ${esc(a.name)}" onclick="openViewer('${esc(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openViewer('${esc(a.id)}')}" style="cursor:pointer"`:'';
   return `<div class="tcard${soon}"><div class="ph"${click}>${inner}</div><div class="b"><p class="nm">${esc(a.name)} ${badge(a.status)}</p><p class="sp">${esc(a.species||'')}${a.sex?(' · '+esc(a.sex)):''}</p>${a.features&&a.features.length?`<p class="ft">${esc(a.features.join(' · '))}</p>`:''}</div></div>`;
 }
 function tileOpen(a){
@@ -389,11 +389,15 @@ function renderViewer(){
   let o=$('viewer');
   if(!o){o=document.createElement('div');o.id='viewer';o.className='overlay';o.style.alignItems='center';document.body.appendChild(o);o.addEventListener('click',e=>{if(e.target===o)closeViewer();});}
   const a=VIEW.a,ph=a.photos,src=ph[VIEW.i].thumb;
-  o.innerHTML=`<button class="obclose" onclick="closeViewer()">✕</button><div style="text-align:center;color:#fff"><div style="font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:10px">${esc(a.name)}</div><img src="${src}" style="max-width:92vw;max-height:70vh;border-radius:14px" alt="">${ph.length>1?`<div style="margin-top:12px"><button class="btn ghost" onclick="vnav(-1)">‹</button> <span style="color:#fff;margin:0 8px">${VIEW.i+1}/${ph.length}</span> <button class="btn ghost" onclick="vnav(1)">›</button></div>`:''}</div>`;
-  o.style.display='flex';
+  dlg(o,'Photos of '+a.name);o.innerHTML=`<button class="obclose" onclick="closeViewer()" aria-label="Close photos">✕</button><div style="text-align:center;color:#fff"><div style="font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:10px">${esc(a.name)}</div><img src="${src}" style="max-width:92vw;max-height:70vh;border-radius:14px" alt="${esc(a.name)}, photo ${VIEW.i+1} of ${ph.length}">${ph.length>1?`<div style="margin-top:12px"><button class="btn ghost" onclick="vnav(-1)">‹</button> <span style="color:#fff;margin:0 8px">${VIEW.i+1}/${ph.length}</span> <button class="btn ghost" onclick="vnav(1)">›</button></div>`:''}</div>`;
+  o.style.display='flex';dlgFocus(o);
 }
 function vnav(d){const n=VIEW.a.photos.length;VIEW.i=(VIEW.i+d+n)%n;renderViewer();}
-function closeViewer(){const o=$('viewer');if(o)o.style.display='none';VIEW=null;}
+function closeViewer(){const o=$('viewer');if(o)o.style.display='none';VIEW=null;restoreFocus();}
+let LASTFOCUS=null;
+function restoreFocus(){const f=LASTFOCUS;LASTFOCUS=null;if(f&&document.contains(f))try{f.focus();}catch(e){}}
+function dlg(o,label){o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');o.setAttribute('aria-label',label);o._new=o.style.display!=='flex';if(o._new)LASTFOCUS=document.activeElement;}
+function dlgFocus(o){if(o._new){o._new=false;const c=o.querySelector('.obclose');if(c)c.focus();}}
 
 /* ============================ NAME suggestions board ============================ */
 const SCLIENT='g'+Math.random().toString(36).slice(2);
@@ -413,8 +417,8 @@ function renderBoard(){
     return `<div class="nbrow"><div class="nbbar" style="width:${pct}%"></div>${vbtn}<span class="nbname">${esc(s.name)}</span><span class="nbpct">${pct}%</span></div>`;
   }).join(''):`<div class="empty">${READONLY?'No suggestions yet.':'No suggestions yet — be the first! 🌟'}</div>`;
   const addrow=READONLY?`<div class="nbpct" style="text-align:center;margin-top:10px">Open the herd app on the farm Wi-Fi to suggest &amp; vote.</div>`:`<div class="newrow"><input id="nbin" class="search" placeholder="✚ Suggest a name…" maxlength="40"><button class="btn" onclick="nbSubmit()">Add</button></div>`;
-  o.innerHTML=`<button class="obclose" onclick="closeBoard()">✕</button><div class="obcard"><div style="text-align:center">${img}<div style="font-family:var(--serif);font-size:18px;font-weight:800;margin-top:8px">Help name this ${esc((a.species||'animal').toLowerCase())}</div><div style="font-size:13px;color:var(--muted)">${esc(a.species||'')}${a.sex?(' · '+esc(a.sex)):''}</div></div><div class="nblist">${rows}</div>${addrow}</div>`;
-  o.style.display='flex';
+  dlg(o,'Help name this '+(a.species||'animal').toLowerCase());o.innerHTML=`<button class="obclose" onclick="closeBoard()" aria-label="Close">✕</button><div class="obcard"><div style="text-align:center">${img}<div style="font-family:var(--serif);font-size:18px;font-weight:800;margin-top:8px">Help name this ${esc((a.species||'animal').toLowerCase())}</div><div style="font-size:13px;color:var(--muted)">${esc(a.species||'')}${a.sex?(' · '+esc(a.sex)):''}</div></div><div class="nblist">${rows}</div>${addrow}</div>`;
+  o.style.display='flex';dlgFocus(o);
   const i=$('nbin');if(i)i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nbSubmit();}});
 }
 function nbSubmit(){
@@ -429,7 +433,8 @@ function nbVote(sid){
   if(!NB||VOTED.has(sid))return; markVoted(sid);
   post('/vote',{animal_id:NB.id,sid}).then(r=>{ if(r&&r.suggestions){NB.list=r.suggestions;if(HERD.name_suggestions)HERD.name_suggestions[NB.id]=r.suggestions;renderBoard();} }).catch(()=>toast('Network error','err'));
 }
-function closeBoard(){const o=$('board');if(o)o.style.display='none';NB=null;}
+function closeBoard(){const o=$('board');if(o)o.style.display='none';NB=null;restoreFocus();}
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(VIEW)closeViewer();else if(NB)closeBoard();});
 
 /* ============================ QUIZ (guest) ============================ */
 let quiz=null;
