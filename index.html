@@ -376,10 +376,15 @@ function tileOpen(a){
   const inner=(np?`<img src="${primary(a)}" alt="Unnamed ${esc((a.species||'animal').toLowerCase())}" loading="lazy">`:`<span aria-hidden="true">${emoji(a.species)}</span>`)+`<span class="namecta"><span aria-hidden="true">💡</span> Help name me</span>`;
   return `<button type="button" class="tcard open" onclick="openBoard('${esc(a.id)}')"><span class="ph">${inner}</span><span class="b"><span class="nm">Name this ${esc((a.species||'animal').toLowerCase())}</span><span class="sp">${esc(a.species||'')}${a.sex?(' · '+esc(a.sex)):''} · open suggestions</span></span></button>`;
 }
+function flockNote(n){ // farm working notes (counts to confirm, dates, who is promised what) never go on the public page
+  n=(n||'').trim(); return (!n||/TBD|counted|\bVL\b|promised|pre-?sold|arriving|unconfirmed|\d{4}-\d{2}-\d{2}|\bminus\b/i.test(n))?'':n;
+}
 function tileFlock(f){
   const sp=esc((f.species||'').toLowerCase()), c=f.count;
-  const label=(c==null)?`${sp} · flock`:`${c} ${sp}${c===1?'':'s'} · flock`;
-  return `<div class="tcard"><div class="ph">${emoji(f.species)}</div><div class="b"><p class="nm">${esc(f.label||f.species)} ${badge(f.status)}</p><p class="sp">${label}</p>${f.notes?`<p class="ft">${esc(f.notes)}</p>`:''}</div></div>`;
+  const approx=/unconfirmed/i.test(f.label||'')||/^\s*~/.test(f.notes||'');
+  const label=(c==null)?`${sp} · flock`:`${approx?'about ':''}${c} ${sp}${c===1?'':'s'} · flock`;
+  const nm=(f.label||f.species||'').replace(/\s*\(unconfirmed\)/i,''), note=flockNote(f.notes);
+  return `<div class="tcard"><div class="ph">${emoji(f.species)}</div><div class="b"><p class="nm">${esc(nm)} ${badge(f.status)}</p><p class="sp">${label}</p>${note?`<p class="ft">${esc(note)}</p>`:''}</div></div>`;
 }
 
 /* photo viewer */
