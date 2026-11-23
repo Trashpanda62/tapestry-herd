@@ -164,7 +164,7 @@
   .foot{font-size:12.5px;color:var(--muted);text-align:center;margin:24px 0 6px;padding-bottom:84px;}
   .foot span{display:block;}
   .flinks{margin-top:10px;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 6px;}
-  .flinks a{color:var(--forest);font-weight:700;text-decoration:none;padding:10px 12px;min-height:40px;border:1px solid var(--line,#e2dcc6);border-radius:999px;background:#fffdf7;}
+  .flinks a{display:inline-flex;align-items:center;white-space:nowrap;color:var(--forest);font-weight:700;text-decoration:none;padding:10px 12px;min-height:40px;border:1px solid var(--line,#e2dcc6);border-radius:999px;background:#fffdf7;}
   .conn{display:inline-block;width:8px;height:8px;border-radius:50%;background:#c9c2ad;margin-right:5px;vertical-align:middle;}
   .conn.live{background:var(--ok);} .conn.off{background:var(--accent);}
   button:focus-visible,input:focus-visible,.tcard:focus-visible,.ph[role=button]:focus-visible,.obclose:focus-visible{outline:2px solid var(--forest);outline-offset:2px;}
@@ -306,7 +306,7 @@ async function boot(){
   const t=HERD&&HERD.totals||{};
   $('sub').innerHTML=`<span class="conn ${READONLY?'':'live'}" id="conn"></span>Tapestry Acres · ${t.headcount||0} animals · ${t.named||0} named`;
   const bs=Object.entries((t.by_species)||{}).map(([k,v])=>`${v} ${k.toLowerCase()}`).join(' · ');
-  $('foot').innerHTML=(bs?'<span>Herd: '+esc(bs)+'</span>':'')+'<span class="flinks"><a href="https://tapestryacres.com/book">Visit the farm</a><a href="https://tapestryacres.com/animals">All about our animals</a><a href="https://tapestryacres.com/shop">Shop</a><a href="https://tapestryacres.com/stay">Stay</a></span>';
+  $('foot').innerHTML=(bs?'<span>Herd: '+esc(bs)+'</span>':'')+'<span class="flinks"><a href="https://tapestryacres.com/book">Visit the farm</a><a href="https://tapestryacres.com/animals">Our animals</a><a href="https://tapestryacres.com/shop">Shop</a><a href="https://tapestryacres.com/stay">Stay</a></span>';
   // deep-link: ?tab=map opens straight to a tab (admin tabs need ?admin=1 too)
   const wantTab=(location.search.match(/[?&]tab=(\w+)/)||[])[1];
   const valid=TABS.some(t=>t.k===wantTab && (!t.admin||ADMIN));
@@ -372,7 +372,7 @@ function tile(a){
   const np=(a.photos||[]).length, soon=np?'':' soon';
   const inner=np?`<img src="${primary(a)}" alt="${esc(a.name)}" loading="lazy">`+(np>1?`<span class="pcount">📷 ${np}</span>`:''):emoji(a.species);
   const click=np?` role="button" tabindex="0" aria-label="View photos of ${esc(a.name)}" onclick="openViewer('${esc(a.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openViewer('${esc(a.id)}')}" style="cursor:pointer"`:'';
-  return `<div class="tcard${soon}"><div class="ph"${click}>${inner}</div><div class="b"><p class="nm">${esc(a.name)} ${badge(a.status)}</p><p class="sp">${esc(a.species||'')}${a.sex?(' · '+esc(a.sex)):''}</p>${a.features&&a.features.length?`<p class="ft">${esc(a.features.join(' · '))}</p>`:''}${a.status==='For Sale'?`<p class="ft"><a href="https://tapestryacres.com/animals" style="color:var(--forest);font-weight:700">Ask about this one</a></p>`:''}</div></div>`;
+  return `<div class="tcard${soon}"><div class="ph"${click}>${inner}</div><div class="b"><p class="nm">${esc(a.name)} ${badge(a.status)}</p><p class="sp">${esc(a.species||'')}${a.sex?(' · '+esc(a.sex)):''}</p>${a.features&&a.features.length?`<p class="ft">${esc(a.features.join(' · '))}</p>`:''}${a.status==='For Sale'?`<p class="ft"><a href="https://tapestryacres.com/animals" style="display:inline-flex;align-items:center;min-height:40px;color:var(--forest);font-weight:700">Ask about this one</a></p>`:''}</div></div>`;
 }
 function tileOpen(a){
   const np=(a.photos||[]).length;
