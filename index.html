@@ -78,7 +78,7 @@
 
   /* ---- cards ---- */
   .card{background:var(--card);border:1px solid var(--cardborder);border-radius:18px;padding:16px;box-shadow:var(--shadow);}
-  .badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.02em;padding:3px 8px;border-radius:7px;color:#fff;vertical-align:middle;}
+  .badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 8px;border-radius:7px;color:#fff;vertical-align:middle;}
 
   /* ---- herd grid (tcard vocab) ---- */
   .tools{display:flex;flex-direction:column;gap:10px;margin:14px 0 10px;}
@@ -268,7 +268,8 @@ const EMOJI = {"alpaca":"🦙","cattle":"🐮","highland cattle":"🐮","cow":"�
 const $ = id => document.getElementById(id);
 const emoji = sp => EMOJI[(sp||"").toLowerCase()] || "🐾";
 const esc = s => { const d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; };
-const badge = s => `<span class="badge" style="background:${SCOLOR[s]||'#888'}">${esc(s)}</span>`;
+const BADGEBG = {"For Sale":"#2f6f96","Sold":"#6e685c","Reserved":"#8f5d0c","Pregnant":"#9b4d7a"}; // darker than the dots so white text reads (4.5:1+)
+const badge = s => `<span class="badge" style="background:${BADGEBG[s]||SCOLOR[s]||'#6e685c'}">${esc(s)}</span>`;
 const hasPhoto = a => !!(a.photos && a.photos.length);
 const primary = a => a.photos && a.photos[0] && a.photos[0].thumb;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
