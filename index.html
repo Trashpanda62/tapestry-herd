@@ -14,6 +14,10 @@
 <meta property="og:title" content="Meet the Herd | Tapestry Acres">
 <meta property="og:description" content="Meet the Tapestry Acres herd and play the daily Farm Steward game in Monroe, Tennessee.">
 <meta property="og:image" content="https://tapestryacres.com/assets/bg/meadow.webp">
+<meta property="og:url" content="https://tapestryacres.com/herd">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Meet the Herd | Tapestry Acres">
+<meta name="twitter:image" content="https://tapestryacres.com/assets/bg/meadow.webp">
 <style>
   :root{
     --cream:#f7f4ec; --ink:#33301f; --muted:#6f6a55;
@@ -81,7 +85,7 @@
   .search{width:100%;padding:12px 14px;border:1px solid var(--cardborder);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;font-size:15px;}
   .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;scrollbar-width:none;}
   .chips::-webkit-scrollbar{display:none}
-  .chip{flex:0 0 auto;}
+  .chip{flex:0 0 auto;min-height:40px;}
   .count{font-size:12px;color:var(--muted);margin:0 2px 10px;}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
   @media(min-width:520px){.grid{grid-template-columns:1fr 1fr 1fr;}}
@@ -287,6 +291,7 @@ function post(path,body){return api(path,{method:'POST',headers:{'Content-Type':
 // gated so it doesn't POST into the void). The tailnet daemon = full features.
 let READONLY = false;
 async function probeLive(){
+  if(/\.github\.io$/.test(location.hostname)) return false; // static mirror: skip the probe, no daemon here
   try{ const r=await fetch(API+'/healthz',{cache:'no-store'}); return r.ok; }catch(e){ return false; }
 }
 async function boot(){
